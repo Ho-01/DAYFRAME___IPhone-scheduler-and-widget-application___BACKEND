@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -26,8 +27,7 @@ public class User {
     private String name;
 
     @Column(nullable = false, updatable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private final Date createdAt = new Date();
+    private final LocalDateTime createdAt = LocalDateTime.now();
 
     @Builder
     public User(String email, String password, String name){
