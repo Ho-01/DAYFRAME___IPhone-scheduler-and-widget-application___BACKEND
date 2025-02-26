@@ -2,6 +2,8 @@ package com.BUS.DayFrame.security;
 
 import com.BUS.DayFrame.domain.RefreshToken;
 import com.BUS.DayFrame.repository.RefreshTokenJpaRepository;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -46,4 +48,15 @@ public class JwtTokenUtil {
         return refreshToken;
     }
 
+    private Claims getClaims(String jwtToken){
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(jwtToken).getPayload();
+    }
+    public Long extractUserId(String jwtToken) {
+        return Long.parseLong(getClaims(jwtToken).getSubject());
+    }
+    public void validateToken(String jwtToken){
+        if(getClaims(jwtToken).getExpiration().before(new Date())){
+            throw new ExpiredJwtException(null, null, "");
+        }
+    }
 }

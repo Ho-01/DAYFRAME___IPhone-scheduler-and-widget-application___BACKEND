@@ -3,6 +3,8 @@ package com.BUS.DayFrame.service;
 import com.BUS.DayFrame.domain.User;
 import com.BUS.DayFrame.dto.UserRegisterDTO;
 import com.BUS.DayFrame.dto.UserResponseDTO;
+import com.BUS.DayFrame.dto.UserUpdateDTO;
+import com.BUS.DayFrame.repository.RefreshTokenJpaRepository;
 import com.BUS.DayFrame.repository.UserJpaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
     @Autowired
     private UserJpaRepository userJpaRepository;
+    @Autowired
+    private RefreshTokenJpaRepository refreshTokenJpaRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -34,11 +38,17 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUserInfo(){
-
+    public UserResponseDTO updateUserInfo(Long userId, UserUpdateDTO userUpdateDTO){
+        User user = userJpaRepository.findById(userId)
+                .orElseThrow(()-> new EntityNotFoundException("userId: "+userId+" 에 해당하는 user를 잧을 수 없음."));
+        user.updateUserInfo(userUpdateDTO.getPassword(), userUpdateDTO.getName());
+        return new UserResponseDTO(user.getId(), user.getEmail(), user.getName(), user.getCreatedAt());
     }
     @Transactional
-    public void deleteUser(){
-
+    public void deleteUser(Long userId){
+        User user = userJpaRepository.findById(userId)
+                .orElseThrow(()-> new EntityNotFoundException("userId: "+userId+" 에 해당하는 user를 잧을 수 없음."));
+        refreshTokenJpaRepository.deleteByUserId(userId);
+        userJpaRepository.delete(user);
     }
 }

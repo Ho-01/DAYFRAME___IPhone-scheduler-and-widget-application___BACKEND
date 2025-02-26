@@ -3,10 +3,12 @@ package com.BUS.DayFrame.controller;
 import com.BUS.DayFrame.domain.User;
 import com.BUS.DayFrame.dto.UserRegisterDTO;
 import com.BUS.DayFrame.dto.UserResponseDTO;
+import com.BUS.DayFrame.dto.UserUpdateDTO;
 import com.BUS.DayFrame.security.JwtTokenUtil;
 import com.BUS.DayFrame.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -36,20 +38,61 @@ public class UserController {
         ));
     }
 
-//    @GetMapping("/info")
-//    public ResponseEntity<Map<String, Object>> getUserInfo(){
-//        UserResponseDTO user = userService.getUserInfo(userId);
-//
-//        Map<String, Object> response = new HashMap<>();
-//        response.put("success", true);
-//        response.put("data", user);
-//
-//        return ResponseEntity.ok(response);
-//    }
+    @GetMapping("/info")
+    public ResponseEntity<Map<String, Object>> getUserInfo(@RequestHeader("Authorization") String token){
+        String jwtToken = token.replace("Bearer ", "");
 
-//    @PutMapping("/{user_id}")
-//    public updateUserInfo
-//
-//    @DeleteMapping("/{user_id}")
-//    public deleteUser
+        jwtTokenUtil.validateToken(jwtToken);
+        Long userId = jwtTokenUtil.extractUserId(jwtToken);
+
+        UserResponseDTO user = userService.getUserInfo(userId);
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", user
+        ));
+    }
+
+    @PutMapping("/{user_id}")
+    public ResponseEntity<Map<String, Object>> updateUserInfo(
+            @RequestHeader("Authorization") String token,
+            @PathVariable("user_id") Long pathUserId,
+            @RequestBody UserUpdateDTO userUpdateDTO) {
+
+        String jwtToken = token.replace("Bearer ", "");
+        jwtTokenUtil.validateToken(jwtToken);
+        Long tokenUserId = jwtTokenUtil.extractUserId(jwtToken);
+
+        if (!tokenUserId.equals(pathUserId)) {
+            throw new AccessDeniedException("User is not authorized");
+        }
+
+        UserResponseDTO user = userService.updateUserInfo(pathUserId, userUpdateDTO);
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", user
+        ));
+    }
+
+    @DeleteMapping("/{user_id}")
+    public ResponseEntity<Map<String, Object>> deleteUser(
+            @RequestHeader("Authorization") String token,
+            @PathVariable("user_id") Long pathUserId) {
+
+        String jwtToken = token.replace("Bearer ", "");
+        jwtTokenUtil.validateToken(jwtToken);
+        Long tokenUserId = jwtTokenUtil.extractUserId(jwtToken);
+
+        if (!tokenUserId.equals(pathUserId)) {
+            throw new AccessDeniedException("User is not authorized");
+        }
+
+        userService.deleteUser(pathUserId);
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "사용자가 성공적으로 삭제되었습니다"
+        ));
+    }
 }
