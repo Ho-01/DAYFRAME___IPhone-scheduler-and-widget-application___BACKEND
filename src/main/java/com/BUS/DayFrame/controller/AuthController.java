@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,29 +49,17 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, Object>> logout(@RequestHeader("Authorization") String token) {
-        String jwtToken = token.replace("Bearer ", "");
-
-        jwtTokenUtil.validateToken(jwtToken);
-
-        String email = jwtTokenUtil.extractEmail(jwtToken);
-        refreshTokenJpaRepository.deleteByEmail(email);
-
+    public ResponseEntity<Map<String, Object>> logout(@AuthenticationPrincipal UserDetails userDetails) {
+        refreshTokenJpaRepository.deleteByEmail(userDetails.getUsername());
         return ResponseEntity.ok(Map.of(
                 "success", true
         ));
     }
 
     @PostMapping("/token")
-    public ResponseEntity<Map<String, Object>> tokenRefresh(@RequestHeader("Authorization") String token) {
-        String jwtToken = token.replace("Bearer ", "");
-
-        jwtTokenUtil.validateToken(jwtToken);
-
-        String email = jwtTokenUtil.extractEmail(jwtToken);
-        String accessToken = jwtTokenUtil.generateAccessToken(email);
-        String refreshToken = jwtTokenUtil.generateRefreshToken(email);
-
+    public ResponseEntity<Map<String, Object>> tokenRefresh(@AuthenticationPrincipal UserDetails userDetails) {
+        String accessToken = jwtTokenUtil.generateAccessToken(userDetails.getUsername());
+        String refreshToken = jwtTokenUtil.generateRefreshToken(userDetails.getUsername());
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "token", Map.of(

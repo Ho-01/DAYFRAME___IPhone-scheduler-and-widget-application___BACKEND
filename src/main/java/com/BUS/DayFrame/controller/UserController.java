@@ -9,6 +9,8 @@ import com.BUS.DayFrame.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -38,15 +40,9 @@ public class UserController {
     }
 
     @GetMapping("/info")
-    public ResponseEntity<Map<String, Object>> getUserInfo(@RequestHeader("Authorization") String token){
-        String jwtToken = token.replace("Bearer ", "");
-
-        jwtTokenUtil.validateToken(jwtToken);
-        String email = jwtTokenUtil.extractEmail(jwtToken);
-        Long userId = userService.getUserIdByEmail(email);
-
+    public ResponseEntity<Map<String, Object>> getUserInfo(@AuthenticationPrincipal UserDetails userDetails){
+        Long userId = userService.getUserIdByEmail(userDetails.getUsername());
         UserResponseDTO user = userService.getUserInfo(userId);
-
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "data", user
@@ -55,19 +51,14 @@ public class UserController {
 
     @PutMapping("/{user_id}")
     public ResponseEntity<Map<String, Object>> updateUserInfo(
-            @RequestHeader("Authorization") String token,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable("user_id") Long pathUserId,
             @RequestBody UserUpdateDTO userUpdateDTO) {
 
-        String jwtToken = token.replace("Bearer ", "");
-        jwtTokenUtil.validateToken(jwtToken);
-        String email = jwtTokenUtil.extractEmail(jwtToken);
-        Long tokenUserId = userService.getUserIdByEmail(email);
-
+        Long tokenUserId = userService.getUserIdByEmail(userDetails.getUsername());
         if (!tokenUserId.equals(pathUserId)) {
             throw new AccessDeniedException("User is not authorized");
         }
-
         UserResponseDTO user = userService.updateUserInfo(pathUserId, userUpdateDTO);
 
         return ResponseEntity.ok(Map.of(
@@ -78,18 +69,13 @@ public class UserController {
 
     @DeleteMapping("/{user_id}")
     public ResponseEntity<Map<String, Object>> deleteUser(
-            @RequestHeader("Authorization") String token,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable("user_id") Long pathUserId) {
 
-        String jwtToken = token.replace("Bearer ", "");
-        jwtTokenUtil.validateToken(jwtToken);
-        String email = jwtTokenUtil.extractEmail(jwtToken);
-        Long tokenUserId = userService.getUserIdByEmail(email);
-
+        Long tokenUserId = userService.getUserIdByEmail(userDetails.getUsername());
         if (!tokenUserId.equals(pathUserId)) {
             throw new AccessDeniedException("User is not authorized");
         }
-
         userService.deleteUser(pathUserId);
 
         return ResponseEntity.ok(Map.of(
