@@ -1,4 +1,4 @@
-package com.BUS.DayFrame.security;
+package com.BUS.DayFrame.security.util;
 
 import com.BUS.DayFrame.domain.RefreshToken;
 import com.BUS.DayFrame.repository.RefreshTokenJpaRepository;
@@ -20,13 +20,13 @@ public class JwtTokenUtil {
     @Autowired
     private RefreshTokenJpaRepository refreshTokenJpaRepository;
 
-    private final SecretKey secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode("김승호현수민전승현박준서화이팅!끝까지완성시켜보자"));
+    private final SecretKey secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode("secretkeysecretkeysecretkeysecretkeysecretkeysecretkey"));
     private final long ACCESS_TOKEN_EXPIRATION = 1000*60*15; // 15분
     private final long REFRESH_TOKEN_EXPIRATION = 1000*60*60*24*7; // 1주일
 
-    public String generateAccessToken(Long userId){
+    public String generateAccessToken(String email){
         return Jwts.builder()
-                .subject(String.valueOf(userId))
+                .subject(email)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+ACCESS_TOKEN_EXPIRATION))
                 .signWith(secretKey)
@@ -34,15 +34,15 @@ public class JwtTokenUtil {
     }
 
     @Transactional
-    public String generateRefreshToken(Long userId){
+    public String generateRefreshToken(String email){
         String refreshToken = Jwts.builder()
-                .subject(String.valueOf(userId))
+                .subject(email)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+REFRESH_TOKEN_EXPIRATION))
                 .signWith(secretKey)
                 .compact();
-        refreshTokenJpaRepository.deleteById(userId);
-        RefreshToken token = new RefreshToken(userId, refreshToken, LocalDateTime.now().plusSeconds(REFRESH_TOKEN_EXPIRATION/1000));
+        refreshTokenJpaRepository.deleteByEmail(email);
+        RefreshToken token = new RefreshToken(email, refreshToken, LocalDateTime.now().plusSeconds(REFRESH_TOKEN_EXPIRATION/1000));
         refreshTokenJpaRepository.save(token);
 
         return refreshToken;
@@ -51,8 +51,8 @@ public class JwtTokenUtil {
     private Claims getClaims(String jwtToken){
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(jwtToken).getPayload();
     }
-    public Long extractUserId(String jwtToken) {
-        return Long.parseLong(getClaims(jwtToken).getSubject());
+    public String extractEmail(String jwtToken) {
+        return getClaims(jwtToken).getSubject();
     }
     public void validateToken(String jwtToken){
         if(getClaims(jwtToken).getExpiration().before(new Date())){

@@ -1,10 +1,8 @@
 package com.BUS.DayFrame.controller;
 
-import com.BUS.DayFrame.dto.LoginRequestDTO;
+import com.BUS.DayFrame.dto.request.LoginRequestDTO;
 import com.BUS.DayFrame.repository.RefreshTokenJpaRepository;
-import com.BUS.DayFrame.security.JwtTokenUtil;
-import io.jsonwebtoken.ExpiredJwtException;
-import org.hibernate.annotations.Array;
+import com.BUS.DayFrame.security.util.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -36,11 +33,9 @@ public class AuthController {
                         loginRequestDTO.getPassword()
                 )
         );
-        String usernameWithId = authentication.getName();
-        Long userId = Long.parseLong(usernameWithId.split(":")[0]);
 
-        String accessToken = jwtTokenUtil.generateAccessToken(userId);
-        String refreshToken = jwtTokenUtil.generateRefreshToken(userId);
+        String accessToken = jwtTokenUtil.generateAccessToken(loginRequestDTO.getEmail());
+        String refreshToken = jwtTokenUtil.generateRefreshToken(loginRequestDTO.getEmail());
 
         return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -57,8 +52,8 @@ public class AuthController {
 
         jwtTokenUtil.validateToken(jwtToken);
 
-        Long userId = jwtTokenUtil.extractUserId(jwtToken);
-        refreshTokenJpaRepository.deleteById(userId);
+        String email = jwtTokenUtil.extractEmail(jwtToken);
+        refreshTokenJpaRepository.deleteByEmail(email);
 
         return ResponseEntity.ok(Map.of(
                 "success", true
@@ -71,9 +66,9 @@ public class AuthController {
 
         jwtTokenUtil.validateToken(jwtToken);
 
-        Long userId = jwtTokenUtil.extractUserId(jwtToken);
-        String accessToken = jwtTokenUtil.generateAccessToken(userId);
-        String refreshToken = jwtTokenUtil.generateRefreshToken(userId);
+        String email = jwtTokenUtil.extractEmail(jwtToken);
+        String accessToken = jwtTokenUtil.generateAccessToken(email);
+        String refreshToken = jwtTokenUtil.generateRefreshToken(email);
 
         return ResponseEntity.ok(Map.of(
                 "success", true,

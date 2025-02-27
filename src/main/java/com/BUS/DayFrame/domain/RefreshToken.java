@@ -19,13 +19,13 @@ public class RefreshToken {
     @GeneratedValue
     private Long id;
 
-    private Long userId;
+    private String email;
     private String refreshToken;
     private LocalDateTime expirationTime;
 
     @Builder
-    public RefreshToken(Long userId, String refreshToken, LocalDateTime expirationTime) {
-        this.userId = userId;
+    public RefreshToken(String email, String refreshToken, LocalDateTime expirationTime) {
+        this.email = email;
         this.refreshToken = refreshToken;
         this.expirationTime = expirationTime;
     }

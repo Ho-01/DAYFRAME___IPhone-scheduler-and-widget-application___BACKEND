@@ -1,4 +1,4 @@
-package com.BUS.DayFrame.dto;
+package com.BUS.DayFrame.dto.response;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
