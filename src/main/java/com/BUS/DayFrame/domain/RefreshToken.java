@@ -1,4 +1,4 @@
-package com.BUS.DayFrame.Entity;
+package com.BUS.DayFrame.domain;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

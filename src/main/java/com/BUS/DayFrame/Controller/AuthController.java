@@ -1,11 +1,10 @@
-package com.BUS.DayFrame.Controller;
+package com.BUS.DayFrame.controller;
 
-import com.BUS.DayFrame.DTO.ErrorResponse;
-import com.BUS.DayFrame.DTO.LoginRequest;
-import com.BUS.DayFrame.DTO.SuccessResponse;
-import com.BUS.DayFrame.DTO.TokenResponse;
+import com.BUS.DayFrame.Error.ErrorResponse;
+import com.BUS.DayFrame.dto.Request.LoginRequestDTO;
+import com.BUS.DayFrame.dto.Response.TokenResponse;
 
-import com.BUS.DayFrame.Service.AuthService;
+import com.BUS.DayFrame.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +21,7 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO request) {
         try {
             TokenResponse tokenResponse = authService.login(request.getEmail(), request.getPassword());
             return ResponseEntity.ok(tokenResponse);
@@ -40,8 +39,11 @@ public class AuthController {
         }
         token = token.substring(7);
         authService.logout(token);
-        return ResponseEntity.ok(new SuccessResponse(true));
+
+
+        return ResponseEntity.ok().body("로그아웃이 완료되었습니다.");
     }
+
 
 
     @PostMapping("/token")

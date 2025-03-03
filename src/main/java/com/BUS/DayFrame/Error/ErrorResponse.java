@@ -1,8 +1,13 @@
-package com.BUS.DayFrame.DTO;
+package com.BUS.DayFrame.Error;
 
 public class ErrorResponse {
-    private boolean success;
-    private ErrorDetail error;
+    private final boolean success;
+    private final ErrorDetail error;
+
+
+    public static ErrorResponse of(String code, String message) {
+        return new ErrorResponse(code, message);
+    }
 
     public ErrorResponse(String code, String message) {
         this.success = false;
@@ -13,8 +18,8 @@ public class ErrorResponse {
     public ErrorDetail getError() { return error; }
 
     public static class ErrorDetail {
-        private String code;
-        private String message;
+        private final String code;
+        private final String message;
 
         public ErrorDetail(String code, String message) {
             this.code = code;

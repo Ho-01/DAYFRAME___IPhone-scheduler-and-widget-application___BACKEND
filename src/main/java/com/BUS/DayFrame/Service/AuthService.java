@@ -1,10 +1,10 @@
-package com.BUS.DayFrame.Service;
+package com.BUS.DayFrame.service;
 
-import com.BUS.DayFrame.DTO.TokenResponse;
-import com.BUS.DayFrame.Entity.RefreshToken;
-import com.BUS.DayFrame.Entity.User;
-import com.BUS.DayFrame.Repository.RefreshTokenRepository;
-import com.BUS.DayFrame.Repository.UserRepository;
+import com.BUS.DayFrame.dto.Response.TokenResponse;
+import com.BUS.DayFrame.domain.RefreshToken;
+import com.BUS.DayFrame.domain.User;
+import com.BUS.DayFrame.repository.RefreshTokenRepository;
+import com.BUS.DayFrame.repository.UserRepository;
 import com.BUS.DayFrame.util.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,11 +31,11 @@ public class AuthService {
     public TokenResponse login(String email, String password) {
         Optional<User> userOptional = userRepository.findByEmail(email);
         if (userOptional.isEmpty()) {
-            throw new RuntimeException("User not found");
+            throw new RuntimeException("유저를 찾을 수 없습니다");
         }
         User user = userOptional.get();
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new RuntimeException("유효하지않은 비밀번호");
         }
 
         // JWT 토큰 생성
@@ -61,13 +61,13 @@ public class AuthService {
 
     public TokenResponse refreshToken(String providedRefreshToken) {
         if (!jwtUtil.validateToken(providedRefreshToken)) {
-            throw new RuntimeException("Invalid or expired refresh token");
+            throw new RuntimeException("유효하지 않거나 만료된 토큰");
         }
 
         Optional<RefreshToken> refreshTokenEntityOpt = refreshTokenRepository.findByRefreshToken(providedRefreshToken);
         if (refreshTokenEntityOpt.isEmpty() ||
                 refreshTokenEntityOpt.get().getExpirationTime().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Invalid or expired refresh token");
+            throw new RuntimeException("유효하지 않거나 만료된 토큰");
         }
 
         User user = refreshTokenEntityOpt.get().getUser();
