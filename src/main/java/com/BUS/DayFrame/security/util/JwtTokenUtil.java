@@ -21,8 +21,8 @@ public class JwtTokenUtil {
     private RefreshTokenJpaRepository refreshTokenJpaRepository;
 
     private final SecretKey secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode("secretkeysecretkeysecretkeysecretkeysecretkeysecretkey"));
-    private final long ACCESS_TOKEN_EXPIRATION = 1000*60*15; // 15분
-    private final long REFRESH_TOKEN_EXPIRATION = 1000*60*60*24*7; // 1주일
+    public final long ACCESS_TOKEN_EXPIRATION = 1000*60*15; // 15분
+    public final long REFRESH_TOKEN_EXPIRATION = 1000*60*60*24*7; // 1주일
 
     public String generateAccessToken(String email){
         return Jwts.builder()
@@ -33,27 +33,24 @@ public class JwtTokenUtil {
                 .compact();
     }
 
-    @Transactional
     public String generateRefreshToken(String email){
-        String refreshToken = Jwts.builder()
+        return Jwts.builder()
                 .subject(email)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+REFRESH_TOKEN_EXPIRATION))
                 .signWith(secretKey)
                 .compact();
-        refreshTokenJpaRepository.deleteByEmail(email);
-        RefreshToken token = new RefreshToken(email, refreshToken, LocalDateTime.now().plusSeconds(REFRESH_TOKEN_EXPIRATION/1000));
-        refreshTokenJpaRepository.save(token);
-
-        return refreshToken;
     }
 
     private Claims getClaims(String jwtToken){
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(jwtToken).getPayload();
     }
+
     public String extractEmail(String jwtToken) {
         return getClaims(jwtToken).getSubject();
     }
+
+
     public void validateToken(String jwtToken){
         if(getClaims(jwtToken).getExpiration().before(new Date())){
             throw new ExpiredJwtException(null, null, "");

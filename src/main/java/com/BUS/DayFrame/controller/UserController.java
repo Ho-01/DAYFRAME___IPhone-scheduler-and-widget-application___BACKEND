@@ -20,64 +20,38 @@ import java.util.Map;
 public class UserController {
     @Autowired
     private UserService userService;
-    @Autowired
-    private JwtTokenUtil jwtTokenUtil;
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(UserCreateDTO userCreateDTO){
-        User savedUser = userService.register(userCreateDTO);
-
-        String accessToken = jwtTokenUtil.generateAccessToken(savedUser.getEmail());
-        String refreshToken = jwtTokenUtil.generateRefreshToken(savedUser.getEmail());
-
+        userService.register(userCreateDTO);
         return ResponseEntity.ok(Map.of(
-                "success", true,
-                "token", Map.of(
-                        "accessToken", accessToken,
-                        "refreshToken", refreshToken
-                )
+                "success", true
         ));
     }
 
     @GetMapping("/info")
     public ResponseEntity<Map<String, Object>> getUserInfo(@AuthenticationPrincipal UserDetails userDetails){
-        Long userId = userService.getUserIdByEmail(userDetails.getUsername());
-        UserResponseDTO user = userService.getUserInfo(userId);
+        UserResponseDTO userResponseDTO = userService.getUserInfo(userDetails.getUsername());
         return ResponseEntity.ok(Map.of(
                 "success", true,
-                "data", user
+                "data", userResponseDTO
         ));
     }
 
-    @PutMapping("/{user_id}")
+    @PutMapping("/info")
     public ResponseEntity<Map<String, Object>> updateUserInfo(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable("user_id") Long pathUserId,
             @RequestBody UserUpdateDTO userUpdateDTO) {
-
-        Long tokenUserId = userService.getUserIdByEmail(userDetails.getUsername());
-        if (!tokenUserId.equals(pathUserId)) {
-            throw new AccessDeniedException("User is not authorized");
-        }
-        UserResponseDTO user = userService.updateUserInfo(pathUserId, userUpdateDTO);
-
+        UserResponseDTO userResponseDTO = userService.updateUserInfo(userDetails.getUsername(), userUpdateDTO);
         return ResponseEntity.ok(Map.of(
                 "success", true,
-                "data", user
+                "data", userResponseDTO
         ));
     }
 
-    @DeleteMapping("/{user_id}")
-    public ResponseEntity<Map<String, Object>> deleteUser(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable("user_id") Long pathUserId) {
-
-        Long tokenUserId = userService.getUserIdByEmail(userDetails.getUsername());
-        if (!tokenUserId.equals(pathUserId)) {
-            throw new AccessDeniedException("User is not authorized");
-        }
-        userService.deleteUser(pathUserId);
-
+    @DeleteMapping("/info")
+    public ResponseEntity<Map<String, Object>> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
+        userService.deleteUser(userDetails.getUsername());
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "사용자가 성공적으로 삭제되었습니다"

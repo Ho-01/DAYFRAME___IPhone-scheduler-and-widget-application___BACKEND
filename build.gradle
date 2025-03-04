@@ -18,10 +18,15 @@ repositories {
 }
 
 dependencies {
+	// Spring Boot 기본 스타터
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// H2 Database (테스트용)
 	runtimeOnly 'com.h2database:h2'
+
+	// 테스트 관련 의존성
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -34,8 +39,14 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+//	// **ByteBuddy (Mockito 및 Hibernate 호환성 문제 해결)**
+//	testImplementation 'net.bytebuddy:byte-buddy:1.15.4'
+//	testImplementation 'net.bytebuddy:byte-buddy-agent:1.15.4'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	jvmArgs += "--add-opens=java.base/java.lang=ALL-UNNAMED"
+	jvmArgs += "-Djdk.attach.allowAttachSelf=true"
 }
