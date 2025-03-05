@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -43,37 +44,33 @@ public class AuthService {
         return new LoginResponseDTO(accessToken, refreshToken);
     }
 
-    // Access Token을 사용하여 Refresh Token을 갱신 (수정중)
     @Transactional
-    public String refreshRefreshToken(String email) {
-        // 기존 Refresh Token 삭제
-        refreshTokenRepository.deleteByEmail(email);
+    public Map<String, String> refreshAccessToken(String refreshToken) {
+        // DB에서 Refresh Token 조회
+        RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 Refresh Token입니다."));
 
-        // 새로운 Refresh Token 생성
-        String newRefreshToken = jwtTokenUtil.generateRefreshToken(email);
-
-        // 새로운 Refresh Token 저장
-        RefreshToken refreshToken = new RefreshToken(email, newRefreshToken, LocalDateTime.now().plusDays(7));
-        refreshTokenRepository.save(refreshToken);
-
-        return newRefreshToken;
-    }
-
-    // Refresh Token을 사용하여 새로운 Access Token 발급 (수정중)
-    @Transactional
-    public AccessTokenResponseDTO refreshAccessToken(RefreshTokenRequestDTO refreshTokenRequest) {
-        String refreshToken = refreshTokenRequest.getRefreshToken();
-
-        Optional<RefreshToken> storedToken = refreshTokenRepository.findByToken(refreshToken);
-        if (storedToken.isEmpty()) {
-            throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다.");
+        // Refresh Token이 만료되었는지 확인
+        if (storedToken.getExpireDate().isBefore(LocalDateTime.now())) {
+            refreshTokenRepository.delete(storedToken); // 만료된 토큰 삭제
+            throw new IllegalArgumentException("Refresh Token이 만료되었습니다. 다시 로그인하세요.");
         }
 
-        String email = storedToken.get().getEmail();
-        String newAccessToken = jwtTokenUtil.generateAccessToken(email);
+        // ✅ 새로운 Access Token & Refresh Token 발급
+        String newAccessToken = jwtTokenUtil.generateAccessToken(storedToken.getEmail());
+        String newRefreshToken = jwtTokenUtil.generateRefreshToken(storedToken.getEmail());
 
-        return new AccessTokenResponseDTO(newAccessToken);
+        // 🔥 기존 Refresh Token 삭제 후 새 Refresh Token 저장
+        refreshTokenRepository.delete(storedToken);
+        refreshTokenRepository.save(new RefreshToken(storedToken.getEmail(), newRefreshToken, LocalDateTime.now().plusDays(7)));
+
+        // 🎯 새로운 토큰 반환
+        return Map.of(
+                "accessToken", newAccessToken,
+                "refreshToken", newRefreshToken
+        );
     }
+
 
     @Transactional
     public void logout(String refreshToken) {

@@ -46,22 +46,20 @@ public class UserController {
         ));
     }
 
-    @PutMapping("/{user_id}")
+    // 현재 로그인한 사용자 정보 수정
+    @PutMapping("/info")
     public ResponseEntity<UserResponseDTO> updateUser(
-            @PathVariable Long user_id,
             @RequestBody UserUpdateDTO userUpdateDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        UserResponseDTO updatedUser = userService.updateUser(user_id, userUpdateDTO, userDetails);
+        UserResponseDTO updatedUser = userService.updateUser(userUpdateDTO, userDetails);
         return ResponseEntity.ok(updatedUser);
     }
 
-    @DeleteMapping("/{user_id}")
-    public ResponseEntity<Map<String, String>> deleteUser(
-            @PathVariable Long user_id,
-            @AuthenticationPrincipal UserDetails userDetails) {
-
-        userService.deleteUser(user_id, userDetails);
+    // 현재 로그인한 사용자 계정 삭제
+    @DeleteMapping("/info")
+    public ResponseEntity<Map<String, String>> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
+        userService.deleteUser(userDetails);
         return ResponseEntity.ok(Map.of("message", "회원 탈퇴 성공"));
     }
 }

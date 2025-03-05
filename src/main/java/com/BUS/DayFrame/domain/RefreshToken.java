@@ -24,4 +24,8 @@ public class RefreshToken {
         this.token = token;
         this.expireDate = expireDate;
     }
+
+    public LocalDateTime getExpireDate() {
+        return expireDate;
+    }
 }

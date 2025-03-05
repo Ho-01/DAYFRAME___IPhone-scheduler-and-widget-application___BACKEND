@@ -6,6 +6,7 @@ import com.BUS.DayFrame.dto.response.AccessTokenResponseDTO;
 import com.BUS.DayFrame.dto.response.LoginResponseDTO;
 import com.BUS.DayFrame.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,17 +29,17 @@ public class AuthController {
 
     // Refresh Token을 사용하여 Access Token 갱신 (수정중) / FE에서 요청
     @PostMapping("/token")
-    public ResponseEntity<AccessTokenResponseDTO> refreshAccessToken(@RequestBody RefreshTokenRequestDTO refreshTokenRequest) {
-        return ResponseEntity.ok(authService.refreshAccessToken(refreshTokenRequest));
-    }
+    public ResponseEntity<Map<String, String>> refreshAccessToken(@RequestHeader("Authorization") String refreshTokenHeader) {
+        // Bearer 토큰 형식 확인
+        if (!refreshTokenHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "잘못된 토큰 형식입니다."));
+        }
 
-    // Access Token을 사용하여 Refresh Token 갱신 (수정중) / FE에서 요청
-    @PostMapping("/refresh-token")
-    public ResponseEntity<Map<String, String>> refreshRefreshToken(@AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername();
-        String newRefreshToken = authService.refreshRefreshToken(email);
+        String refreshToken = refreshTokenHeader.substring(7); // "Bearer " 제거
 
-        return ResponseEntity.ok(Map.of("refreshToken", newRefreshToken));
+        // 새로운 Access Token 및 Refresh Token 발급
+        Map<String, String> tokens = authService.refreshAccessToken(refreshToken);
+        return ResponseEntity.ok(tokens);
     }
 
     @PostMapping("/logout")

@@ -40,41 +40,34 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponseDTO updateUser(Long userId, UserUpdateDTO userUpdateDTO, UserDetails userDetails) {
-        User user = userRepository.findById(userId)
+    public UserResponseDTO updateUser(UserUpdateDTO userUpdateDTO, UserDetails userDetails) {
+        // 🔍 현재 로그인한 사용자의 정보를 가져옴
+        User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-        // 현재 로그인한 사용자가 요청한 userId와 동일한지 검증
-        if (!user.getEmail().equals(userDetails.getUsername())) {
-            throw new SecurityException("자신의 계정만 수정할 수 있습니다.");
-        }
-
-        // 이름 변경 (null 체크 후 변경)
+        // 🔄 이름 변경
         if (userUpdateDTO.getName() != null && !userUpdateDTO.getName().isEmpty()) {
-            userRepository.updateName(userId, userUpdateDTO.getName());
+            userRepository.updateName(user.getId(), userUpdateDTO.getName());
         }
 
-        // 비밀번호 변경 (null 체크 후 암호화하여 저장)
+        // 🔄 비밀번호 변경 (암호화 후 저장)
         if (userUpdateDTO.getPassword() != null && !userUpdateDTO.getPassword().isEmpty()) {
             String encodedPassword = passwordEncoder.encode(userUpdateDTO.getPassword());
-            userRepository.updatePassword(userId, encodedPassword);
+            userRepository.updatePassword(user.getId(), encodedPassword);
         }
 
-        // 변경된 사용자 정보 반환
-        User updatedUser = userRepository.findById(userId).orElseThrow();
+        // ✅ 변경된 사용자 정보 반환
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
         return new UserResponseDTO(updatedUser.getEmail(), updatedUser.getName());
     }
 
     @Transactional
-    public void deleteUser(Long userId, UserDetails userDetails) {
-        User user = userRepository.findById(userId)
+    public void deleteUser(UserDetails userDetails) {
+        // 🔍 현재 로그인한 사용자의 정보를 가져옴
+        User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-        // 현재 로그인한 사용자가 요청한 userId와 동일한지 검증
-        if (!user.getEmail().equals(userDetails.getUsername())) {
-            throw new SecurityException("자신의 계정만 삭제할 수 있습니다.");
-        }
-
+        // 🗑 계정 삭제
         userRepository.delete(user);
     }
 }
