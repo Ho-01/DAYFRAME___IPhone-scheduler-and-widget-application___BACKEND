@@ -1,7 +1,7 @@
 package com.BUS.DayFrame.security.config;
 
 import com.BUS.DayFrame.security.filter.JwtAuthenticationFilter;
-import com.BUS.DayFrame.service.CustomUserDetailsService;
+import com.BUS.DayFrame.security.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

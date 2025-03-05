@@ -5,7 +5,7 @@ import com.BUS.DayFrame.dto.request.UserCreateDTO;
 import com.BUS.DayFrame.domain.User;
 import com.BUS.DayFrame.repository.RefreshTokenRepository;
 import com.BUS.DayFrame.repository.UserRepository;
-import com.BUS.DayFrame.util.JwtTokenUtil;
+import com.BUS.DayFrame.security.util.JwtTokenUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;

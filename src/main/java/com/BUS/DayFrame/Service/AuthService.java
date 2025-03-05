@@ -5,7 +5,7 @@ import com.BUS.DayFrame.domain.RefreshToken;
 import com.BUS.DayFrame.domain.User;
 import com.BUS.DayFrame.repository.RefreshTokenRepository;
 import com.BUS.DayFrame.repository.UserRepository;
-import com.BUS.DayFrame.util.JwtTokenUtil;
+import com.BUS.DayFrame.security.util.JwtTokenUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

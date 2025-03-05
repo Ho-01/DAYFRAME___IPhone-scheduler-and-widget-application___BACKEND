@@ -1,8 +1,7 @@
 package com.BUS.DayFrame.security.filter;
 
-import com.BUS.DayFrame.service.CustomUserDetailsService;
-import com.BUS.DayFrame.util.JwtTokenUtil;
-import jakarta.annotation.Nullable;
+import com.BUS.DayFrame.security.service.CustomUserDetailsService;
+import com.BUS.DayFrame.security.util.JwtTokenUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
