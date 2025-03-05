@@ -4,7 +4,7 @@ import com.BUS.DayFrame.exception.ErrorResponse;
 import com.BUS.DayFrame.dto.request.LoginRequestDTO;
 import com.BUS.DayFrame.dto.response.TokenResponse;
 
-import com.BUS.DayFrame.service.AuthService;
+import com.BUS.DayFrame.service1.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

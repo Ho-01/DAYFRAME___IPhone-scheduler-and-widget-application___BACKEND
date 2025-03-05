@@ -1,7 +1,7 @@
 package com.BUS.DayFrame.security.service;
 
 import com.BUS.DayFrame.domain.User;
-import com.BUS.DayFrame.repository.UserRepository;
+import com.BUS.DayFrame.repository1.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

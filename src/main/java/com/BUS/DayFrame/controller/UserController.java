@@ -1,10 +1,10 @@
-package com.BUS.DayFrame.controller1;
+package com.BUS.DayFrame.controller;
 
 import com.BUS.DayFrame.exception.ErrorResponse;
 import com.BUS.DayFrame.dto.response.UserInfoResponse;
 import com.BUS.DayFrame.dto.request.UserCreateDTO;
 import com.BUS.DayFrame.domain.User;
-import com.BUS.DayFrame.service.UserService;
+import com.BUS.DayFrame.service1.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
