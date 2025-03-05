@@ -1,11 +1,12 @@
 package com.BUS.DayFrame.controller;
 
-import com.BUS.DayFrame.Error.ErrorResponse;
-import com.BUS.DayFrame.dto.Response.TokenResponse;
-import com.BUS.DayFrame.dto.Response.UserInfoResponse;
-import com.BUS.DayFrame.dto.Request.UserCreateDTO;
+import com.BUS.DayFrame.exception.ErrorResponse;
+import com.BUS.DayFrame.dto.response.TokenResponse;
+import com.BUS.DayFrame.dto.response.UserInfoResponse;
+import com.BUS.DayFrame.dto.request.UserCreateDTO;
 import com.BUS.DayFrame.domain.User;
 import com.BUS.DayFrame.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,14 +26,17 @@ public class UserController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserCreateDTO request) {
+    public ResponseEntity<ErrorResponse> register(@Valid @RequestBody UserCreateDTO request) {
         try {
-            TokenResponse tokenResponse = userService.registerUser(request);
-            return ResponseEntity.ok(tokenResponse);
+            userService.registerUser(request);
+            return ResponseEntity.ok(ErrorResponse.success("create success"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("가입실패", e.getMessage()));
+            return ResponseEntity.badRequest().body(ErrorResponse.error("가입실패", e.getMessage()));
         }
     }
+
+
+
     @GetMapping("/info")
     public ResponseEntity<?> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
@@ -44,26 +48,49 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
-    @PutMapping("/{userId}")
+
+
+    @PutMapping("/info")
     public ResponseEntity<?> updateUser(
-            @PathVariable Long userId,
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody Map<String, String> requestBody) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(403).body(new ErrorResponse("forbidden", "authentication required"));
+        }
+
+        // JWT 토큰에서 로그인한 유저 정보 가져오기
+        User user = userService.getUserByEmail(userDetails.getUsername());
 
         String password = requestBody.get("password");
         String name = requestBody.get("name");
 
-        User updatedUser = userService.updateUser(userId, password, name);
+        // 사용자 정보 업데이트
+        User updatedUser = userService.updateUser(user.getId(), password, name);
+
         return ResponseEntity.ok(new UserInfoResponse(updatedUser));
     }
 
 
 
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
-        userService.deleteUser(userId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/info")
+    public ResponseEntity<?> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(403).body(new ErrorResponse("forbidden", "authentication required"));
+        }
+
+        User user = userService.getUserByEmail(userDetails.getUsername());
+        if (user == null) {
+            return ResponseEntity.status(404).body(new ErrorResponse("not_found", "not_found user"));
+        }
+
+        System.out.println("delete " + user.getEmail());
+        userService.deleteUser(user.getId());
+
+        return ResponseEntity.ok().body(new ErrorResponse("success", "delte user"));
     }
-    }
+
+}
 
 
 

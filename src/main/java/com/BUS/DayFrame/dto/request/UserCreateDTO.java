@@ -1,4 +1,4 @@
-package com.BUS.DayFrame.dto.Request;
+package com.BUS.DayFrame.dto.request;
 
 
 

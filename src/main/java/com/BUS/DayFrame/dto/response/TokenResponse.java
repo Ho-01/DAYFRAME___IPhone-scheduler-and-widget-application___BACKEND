@@ -1,4 +1,4 @@
-package com.BUS.DayFrame.dto.Response;
+package com.BUS.DayFrame.dto.response;
 
 public class TokenResponse {
     private boolean success;

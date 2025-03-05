@@ -1,23 +1,24 @@
 package com.BUS.DayFrame.domain;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 
+@Getter
 @Entity
 @Table(name = "users")
-@Getter //
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; //
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false , unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -25,12 +26,12 @@ public class User {
 
     private String name;
 
-    @Column(nullable = false, updatable = false)
+    @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    public User(String email, String encodedPassword, String name) {
+    public User(String email, String password, String name) {
         this.email = email;
-        this.password = encodedPassword;
+        this.password = password;
         this.name = name;
         this.createdAt = LocalDateTime.now();
     }
@@ -48,4 +49,7 @@ public class User {
             this.name = name;
         }
     }
+
+
+
 }

@@ -1,56 +1,65 @@
 package com.BUS.DayFrame.service;
 
-import com.BUS.DayFrame.dto.Response.TokenResponse;
-import com.BUS.DayFrame.dto.Request.UserCreateDTO;
+import com.BUS.DayFrame.dto.response.TokenResponse;
+import com.BUS.DayFrame.dto.request.UserCreateDTO;
 import com.BUS.DayFrame.domain.User;
+import com.BUS.DayFrame.repository.RefreshTokenRepository;
 import com.BUS.DayFrame.repository.UserRepository;
-import com.BUS.DayFrame.util.JwtUtil;
+import com.BUS.DayFrame.util.JwtTokenUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+    private final JwtTokenUtil jwtTokenUtil;
+    private final RefreshTokenRepository refreshTokenRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenUtil jwtTokenUtil, RefreshTokenRepository refreshTokenRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
+        this.jwtTokenUtil = jwtTokenUtil;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     public TokenResponse registerUser(UserCreateDTO request) {
         if(userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("사용중인 이메일입니다.");
+            throw new RuntimeException("already exists user_email");
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = new User(request.getEmail(), encodedPassword, request.getName());
         userRepository.save(user);
 
-        String accessToken = jwtUtil.generateAccessToken(user);
-        String refreshToken = jwtUtil.generateRefreshToken(user);
+        String accessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
+        String refreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
+
         return new TokenResponse(true, accessToken, refreshToken);
     }
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));// 근데 에러코드를 모두 같은거로 만든다고 했었던거같은데
+                .orElseThrow(() -> new RuntimeException("not found user"));// 근데 에러코드를 모두 같은거로 만든다고 했었던거같은데
     }
 
 
     public User getUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("not found user"));
     }
 
     public User updateUser(Long userId, String password, String name) {
-        String email = userRepository.findEmailById(userId)
-                .orElseThrow(() -> new RuntimeException("해당 ID의 이메일을 찾을 수 없습니다."));
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("not found user"));
 
         user.updateUser(password, name, passwordEncoder);
         return userRepository.save(user);
@@ -59,9 +68,18 @@ public class UserService {
 
 
 
+
+    @Transactional
     public void deleteUser(Long userId) {
-        User user = getUserById(userId);
+
+        refreshTokenRepository.deleteByUserId(userId);
+
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("not found user"));
         userRepository.delete(user);
     }
+
+
 }
 

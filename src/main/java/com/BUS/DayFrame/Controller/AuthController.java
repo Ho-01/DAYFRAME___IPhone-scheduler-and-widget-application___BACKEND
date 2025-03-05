@@ -1,8 +1,8 @@
 package com.BUS.DayFrame.controller;
 
-import com.BUS.DayFrame.Error.ErrorResponse;
-import com.BUS.DayFrame.dto.Request.LoginRequestDTO;
-import com.BUS.DayFrame.dto.Response.TokenResponse;
+import com.BUS.DayFrame.exception.ErrorResponse;
+import com.BUS.DayFrame.dto.request.LoginRequestDTO;
+import com.BUS.DayFrame.dto.response.TokenResponse;
 
 import com.BUS.DayFrame.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,7 +26,7 @@ public class AuthController {
             TokenResponse tokenResponse = authService.login(request.getEmail(), request.getPassword());
             return ResponseEntity.ok(tokenResponse);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("invalid_credentials", "이메일 또는 비밀번호 오류"));
+            return ResponseEntity.badRequest().body(new ErrorResponse("invalid_credentials", "email or password is incorrect"));
         }
     }
 
@@ -35,7 +35,7 @@ public class AuthController {
     public ResponseEntity<?> logout(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         if (token == null || !token.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("missing_token", "토큰이 제공되지 않았습니다."));
+            return ResponseEntity.badRequest().body(new ErrorResponse("missing_token", "missing_token"));
         }
         token = token.substring(7);
         authService.logout(token);
@@ -50,7 +50,7 @@ public class AuthController {
     public ResponseEntity<?> refreshToken(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
         if (token == null || !token.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("missing_token", "토큰이 제공되지 않았습니다."));
+            return ResponseEntity.badRequest().body(new ErrorResponse("missing_token", "missing_token"));
         }
         token = token.substring(7);
         try {

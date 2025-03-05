@@ -1,4 +1,4 @@
-package com.BUS.DayFrame.dto.Response;
+package com.BUS.DayFrame.dto.response;
 
 import com.BUS.DayFrame.domain.User;
 import lombok.Getter;

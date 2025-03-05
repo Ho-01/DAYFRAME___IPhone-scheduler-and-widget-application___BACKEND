@@ -1,16 +1,15 @@
 package com.BUS.DayFrame.service;
 
-import com.BUS.DayFrame.dto.Response.TokenResponse;
+import com.BUS.DayFrame.dto.response.TokenResponse;
 import com.BUS.DayFrame.domain.RefreshToken;
 import com.BUS.DayFrame.domain.User;
 import com.BUS.DayFrame.repository.RefreshTokenRepository;
 import com.BUS.DayFrame.repository.UserRepository;
-import com.BUS.DayFrame.util.JwtUtil;
+import com.BUS.DayFrame.util.JwtTokenUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 public class AuthService {
@@ -18,68 +17,76 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+    private final JwtTokenUtil jwtTokenUtil;
 
     public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
-                       PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+                       PasswordEncoder passwordEncoder, JwtTokenUtil jwtTokenUtil) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
+        this.jwtTokenUtil = jwtTokenUtil;
     }
 
+
     public TokenResponse login(String email, String password) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isEmpty()) {
-            throw new RuntimeException("유저를 찾을 수 없습니다");
-        }
-        User user = userOptional.get();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("not found user"));
+
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("유효하지않은 비밀번호");
+            throw new RuntimeException("password not matched");
         }
 
-        // JWT 토큰 생성
-        String accessToken = jwtUtil.generateAccessToken(user);
-        String refreshToken = jwtUtil.generateRefreshToken(user);
+        // ✅ JWT 토큰 생성
+        String accessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
+        String refreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
 
-        // DB에 refresh token 저장 (이미 존재하면 업데이트)
+        // ✅ Refresh Token 저장 또는 업데이트
         RefreshToken tokenEntity = refreshTokenRepository.findByUser(user)
-                .orElse(new RefreshToken());
-        tokenEntity.setUser(user);
+                .orElse(new RefreshToken(user, refreshToken, LocalDateTime.now().plusSeconds(jwtTokenUtil.getRefreshExpirationInSeconds())));
+
         tokenEntity.setRefreshToken(refreshToken);
-        tokenEntity.setExpirationTime(LocalDateTime.now().plusSeconds(jwtUtil.getRefreshExpirationInSeconds()));
+        tokenEntity.setExpirationTime(LocalDateTime.now().plusSeconds(jwtTokenUtil.getRefreshExpirationInSeconds()));
+
         refreshTokenRepository.save(tokenEntity);
 
         return new TokenResponse(true, accessToken, refreshToken);
     }
 
+
+    // ✅ 로그아웃 (Refresh Token 삭제)
     public void logout(String token) {
-        // 로그아웃 시 DB에 저장된 refresh token을 삭제&무효화 가능함
-        // 토큰 값으로 조회 후 삭제하는 방식인데 필요한가..?
         refreshTokenRepository.findByRefreshToken(token).ifPresent(refreshTokenRepository::delete);
     }
 
-    public TokenResponse refreshToken(String providedRefreshToken) {
-        if (!jwtUtil.validateToken(providedRefreshToken)) {
-            throw new RuntimeException("유효하지 않거나 만료된 토큰");
+
+    public TokenResponse refreshToken(String refreshToken) {
+
+        RefreshToken tokenEntity = refreshTokenRepository.findByRefreshToken(refreshToken)
+                .orElseThrow(() -> new RuntimeException("not valid refresh token"));
+
+
+        if (tokenEntity.getExpirationTime().isBefore(LocalDateTime.now())) {
+            refreshTokenRepository.delete(tokenEntity);
+            throw new RuntimeException("Refresh Token is expired");
         }
 
-        Optional<RefreshToken> refreshTokenEntityOpt = refreshTokenRepository.findByRefreshToken(providedRefreshToken);
-        if (refreshTokenEntityOpt.isEmpty() ||
-                refreshTokenEntityOpt.get().getExpirationTime().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("유효하지 않거나 만료된 토큰");
+
+        User user = tokenEntity.getUser();
+        if (user == null) {
+            refreshTokenRepository.delete(tokenEntity);
+            throw new RuntimeException("not found user");
         }
 
-        User user = refreshTokenEntityOpt.get().getUser();
-        String newAccessToken = jwtUtil.generateAccessToken(user);
-        String newRefreshToken = jwtUtil.generateRefreshToken(user);
 
-        // 갱신된 refresh token DB에 업데이트
-        RefreshToken tokenEntity = refreshTokenEntityOpt.get();
-        tokenEntity.setRefreshToken(newRefreshToken);
-        tokenEntity.setExpirationTime(LocalDateTime.now().plusSeconds(jwtUtil.getRefreshExpirationInSeconds()));
-        refreshTokenRepository.save(tokenEntity);
+        refreshTokenRepository.delete(tokenEntity);
+        String newAccessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
+        String newRefreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
+
+        // 5️⃣ 새로운 Refresh Token 저장
+        RefreshToken newToken = new RefreshToken(user, newRefreshToken, LocalDateTime.now().plusDays(7));
+        refreshTokenRepository.save(newToken);
 
         return new TokenResponse(true, newAccessToken, newRefreshToken);
     }
+
 }
