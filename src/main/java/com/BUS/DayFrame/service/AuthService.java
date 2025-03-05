@@ -3,8 +3,6 @@ package com.BUS.DayFrame.service;
 import com.BUS.DayFrame.domain.RefreshToken;
 import com.BUS.DayFrame.domain.User;
 import com.BUS.DayFrame.dto.request.LoginRequestDTO;
-import com.BUS.DayFrame.dto.request.RefreshTokenRequestDTO;
-import com.BUS.DayFrame.dto.response.AccessTokenResponseDTO;
 import com.BUS.DayFrame.dto.response.LoginResponseDTO;
 import com.BUS.DayFrame.repository.RefreshTokenRepository;
 import com.BUS.DayFrame.repository.UserRepository;

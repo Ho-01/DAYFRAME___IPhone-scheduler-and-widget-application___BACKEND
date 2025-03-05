@@ -1,15 +1,11 @@
 package com.BUS.DayFrame.controller;
 
 import com.BUS.DayFrame.dto.request.LoginRequestDTO;
-import com.BUS.DayFrame.dto.request.RefreshTokenRequestDTO;
-import com.BUS.DayFrame.dto.response.AccessTokenResponseDTO;
 import com.BUS.DayFrame.dto.response.LoginResponseDTO;
 import com.BUS.DayFrame.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
