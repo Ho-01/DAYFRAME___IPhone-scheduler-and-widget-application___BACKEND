@@ -27,7 +27,7 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // Refresh Token을 사용하여 Access Token 갱신 (수정중) / FE에서 요청
+    // 토큰 갱신
     @PostMapping("/token")
     public ResponseEntity<Map<String, String>> refreshAccessToken(@RequestHeader("Authorization") String refreshTokenHeader) {
         // Bearer 토큰 형식 확인

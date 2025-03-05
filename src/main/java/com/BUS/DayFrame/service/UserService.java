@@ -19,7 +19,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Transactional // DB 일관성 유지, 에러 발생 시 롤백할꺼임!
+    @Transactional // DB 일관성 유지, 에러 발생 시 롤백
     public User createUser(UserCreateDTO userCreateDTO) {
 
         // 가입 시 이메일 중복 검사
@@ -41,33 +41,33 @@ public class UserService {
 
     @Transactional
     public UserResponseDTO updateUser(UserUpdateDTO userUpdateDTO, UserDetails userDetails) {
-        // 🔍 현재 로그인한 사용자의 정보를 가져옴
+        // 현재 로그인한 사용자의 정보를 가져옴
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-        // 🔄 이름 변경
+        // 이름 변경
         if (userUpdateDTO.getName() != null && !userUpdateDTO.getName().isEmpty()) {
             userRepository.updateName(user.getId(), userUpdateDTO.getName());
         }
 
-        // 🔄 비밀번호 변경 (암호화 후 저장)
+        // 비밀번호 변경
         if (userUpdateDTO.getPassword() != null && !userUpdateDTO.getPassword().isEmpty()) {
             String encodedPassword = passwordEncoder.encode(userUpdateDTO.getPassword());
             userRepository.updatePassword(user.getId(), encodedPassword);
         }
 
-        // ✅ 변경된 사용자 정보 반환
+        // 변경된 사용자 정보 반환
         User updatedUser = userRepository.findById(user.getId()).orElseThrow();
         return new UserResponseDTO(updatedUser.getEmail(), updatedUser.getName());
     }
 
     @Transactional
     public void deleteUser(UserDetails userDetails) {
-        // 🔍 현재 로그인한 사용자의 정보를 가져옴
+        // 현재 로그인한 사용자의 정보를 가져옴
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-        // 🗑 계정 삭제
+        // 계정 삭제
         userRepository.delete(user);
     }
 }

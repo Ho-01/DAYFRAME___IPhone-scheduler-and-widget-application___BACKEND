@@ -22,6 +22,7 @@ public class UserController {
     private final UserRepository userRepository;
     private final UserService userService;
 
+    // 회원가입
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserCreateDTO userCreateDTO) {
         try {

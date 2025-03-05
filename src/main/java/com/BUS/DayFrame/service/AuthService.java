@@ -27,6 +27,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
 
+    // 로그인
     @Transactional
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
         Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
@@ -44,6 +45,7 @@ public class AuthService {
         return new LoginResponseDTO(accessToken, refreshToken);
     }
 
+    // 토큰 재발급
     @Transactional
     public Map<String, String> refreshAccessToken(String refreshToken) {
         // DB에서 Refresh Token 조회
@@ -53,25 +55,25 @@ public class AuthService {
         // Refresh Token이 만료되었는지 확인
         if (storedToken.getExpireDate().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(storedToken); // 만료된 토큰 삭제
-            throw new IllegalArgumentException("Refresh Token이 만료되었습니다. 다시 로그인하세요.");
+            throw new IllegalArgumentException("토큰이 만료되었습니다. 다시 로그인하세요.");
         }
 
-        // ✅ 새로운 Access Token & Refresh Token 발급
+        // 새로운 Access Token & Refresh Token 발급
         String newAccessToken = jwtTokenUtil.generateAccessToken(storedToken.getEmail());
         String newRefreshToken = jwtTokenUtil.generateRefreshToken(storedToken.getEmail());
 
-        // 🔥 기존 Refresh Token 삭제 후 새 Refresh Token 저장
+        // 기존 Refresh Token 삭제 후 새 Refresh Token 저장
         refreshTokenRepository.delete(storedToken);
         refreshTokenRepository.save(new RefreshToken(storedToken.getEmail(), newRefreshToken, LocalDateTime.now().plusDays(7)));
 
-        // 🎯 새로운 토큰 반환
+        // 새로운 토큰 반환
         return Map.of(
                 "accessToken", newAccessToken,
                 "refreshToken", newRefreshToken
         );
     }
 
-
+    // 로그아웃
     @Transactional
     public void logout(String refreshToken) {
         RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
