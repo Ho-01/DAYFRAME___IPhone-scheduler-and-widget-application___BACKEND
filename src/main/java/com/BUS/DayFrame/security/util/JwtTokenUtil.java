@@ -1,4 +1,4 @@
-package com.BUS.DayFrame.util;
+package com.BUS.DayFrame.security.util;
 
 import com.BUS.DayFrame.domain.User;
 import io.jsonwebtoken.*;
