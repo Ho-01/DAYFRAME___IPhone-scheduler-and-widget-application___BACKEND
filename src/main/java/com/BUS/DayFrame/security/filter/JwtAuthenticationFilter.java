@@ -1,5 +1,6 @@
 package com.BUS.DayFrame.security.filter;
 
+import com.BUS.DayFrame.security.service.CustomUserDetailsService;
 import com.BUS.DayFrame.security.util.JwtTokenUtil;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.FilterChain;
@@ -9,6 +10,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -17,6 +20,8 @@ import java.util.ArrayList;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
@@ -29,9 +34,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             token = token.replace("Bearer ", "");
             jwtTokenUtil.validateToken(token);
             String email = jwtTokenUtil.extractEmail(token);
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
 
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(email, null, new ArrayList<>());
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 

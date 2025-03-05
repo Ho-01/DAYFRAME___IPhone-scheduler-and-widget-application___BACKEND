@@ -7,9 +7,12 @@ import com.BUS.DayFrame.dto.request.UserUpdateDTO;
 import com.BUS.DayFrame.security.util.JwtTokenUtil;
 import com.BUS.DayFrame.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +25,7 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> register(UserCreateDTO userCreateDTO){
+    public ResponseEntity<Map<String, Object>> register(@RequestBody UserCreateDTO userCreateDTO){
         userService.register(userCreateDTO);
         return ResponseEntity.ok(Map.of(
                 "success", true
