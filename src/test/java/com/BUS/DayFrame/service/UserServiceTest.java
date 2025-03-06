@@ -63,7 +63,7 @@ class UserServiceTest{
         User foundUser = userJpaRepository.findByEmail(userResponseDTO.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         String foundPassword = foundUser.getPassword();
-        Assertions.assertThat(foundPassword).isEqualTo(userUpdateDTO.getPassword());
+        Assertions.assertThat(passwordEncoder.matches(userUpdateDTO.getPassword(), foundPassword)).isEqualTo(true);
     }
 
     @Test

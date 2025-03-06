@@ -43,7 +43,7 @@ public class UserService {
     public UserResponseDTO updateUserInfo(String email, UserUpdateDTO userUpdateDTO){
         User user = userJpaRepository.findByEmail(email)
                 .orElseThrow(()-> new EntityNotFoundException("email: "+email+" 에 해당하는 user를 잧을 수 없음."));
-        user.updateUserInfo(userUpdateDTO.getPassword(), userUpdateDTO.getName());
+        user.updateUserInfo(passwordEncoder.encode(userUpdateDTO.getPassword()), userUpdateDTO.getName());
         return new UserResponseDTO(user.getId(), user.getEmail(), user.getName(), user.getCreatedAt());
     }
     @Transactional
