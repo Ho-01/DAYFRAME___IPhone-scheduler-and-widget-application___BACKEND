@@ -1,24 +1,23 @@
 package com.BUS.DayFrame.domain;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.time.LocalDateTime;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Getter
 @Entity
 @Table(name = "users")
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED) // ✅ 기본 생성자 보호
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; //
+    private Long id;
 
-    @Column(nullable = false , unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -29,6 +28,7 @@ public class User {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
+    @Builder
     public User(String email, String password, String name) {
         this.email = email;
         this.password = password;
@@ -36,20 +36,12 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+
+    public void changePassword(String newPassword, PasswordEncoder passwordEncoder) {
+        this.password = passwordEncoder.encode(newPassword);
     }
 
-    public void updateUser(String password, String name, PasswordEncoder passwordEncoder) {
-        if (password != null && !password.isEmpty()) {
-            this.password = passwordEncoder.encode(password);
-        }
-        if (name != null && !name.isEmpty()) {
-            this.name = name;
-        }
+    public void changeName(String newName) {
+        this.name = newName;
     }
-
-
-
 }

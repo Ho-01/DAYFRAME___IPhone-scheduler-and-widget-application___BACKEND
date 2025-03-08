@@ -1,6 +1,6 @@
 package com.BUS.DayFrame.service;
 
-import com.BUS.DayFrame.dto.response.TokenResponse;
+import com.BUS.DayFrame.dto.response.TokenResponseDTO;
 import com.BUS.DayFrame.domain.RefreshToken;
 import com.BUS.DayFrame.domain.User;
 import com.BUS.DayFrame.repository.RefreshTokenRepository;
@@ -28,19 +28,20 @@ public class AuthService {
     }
 
 
-    public TokenResponse login(String email, String password) {
+    public TokenResponseDTO login(String email, String password) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("not found user"));
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("password not matched");
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        // ✅ JWT 토큰 생성
+
+
         String accessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
         String refreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
 
-        // ✅ Refresh Token 저장 또는 업데이트
+
         RefreshToken tokenEntity = refreshTokenRepository.findByUser(user)
                 .orElse(new RefreshToken(user, refreshToken, LocalDateTime.now().plusSeconds(jwtTokenUtil.getRefreshExpirationInSeconds())));
 
@@ -49,17 +50,18 @@ public class AuthService {
 
         refreshTokenRepository.save(tokenEntity);
 
-        return new TokenResponse(true, accessToken, refreshToken);
+        return new TokenResponseDTO(true, accessToken, refreshToken);
     }
 
 
-    // ✅ 로그아웃 (Refresh Token 삭제)
+
+
     public void logout(String token) {
         refreshTokenRepository.findByRefreshToken(token).ifPresent(refreshTokenRepository::delete);
     }
 
 
-    public TokenResponse refreshToken(String refreshToken) {
+    public TokenResponseDTO refreshToken(String refreshToken) {
 
         RefreshToken tokenEntity = refreshTokenRepository.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new RuntimeException("not valid refresh token"));
@@ -82,11 +84,11 @@ public class AuthService {
         String newAccessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
         String newRefreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
 
-        // 5️⃣ 새로운 Refresh Token 저장
+
         RefreshToken newToken = new RefreshToken(user, newRefreshToken, LocalDateTime.now().plusDays(7));
         refreshTokenRepository.save(newToken);
 
-        return new TokenResponse(true, newAccessToken, newRefreshToken);
+        return new TokenResponseDTO(true, newAccessToken, newRefreshToken);
     }
 
 }

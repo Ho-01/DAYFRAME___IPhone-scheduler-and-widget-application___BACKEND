@@ -1,22 +1,18 @@
 package com.BUS.DayFrame.controller;
 
-import com.BUS.DayFrame.exception.ErrorResponse;
-import com.BUS.DayFrame.dto.response.UserInfoResponse;
 import com.BUS.DayFrame.dto.request.UserCreateDTO;
-import com.BUS.DayFrame.domain.User;
-import com.BUS.DayFrame.service1.UserService;
+import com.BUS.DayFrame.dto.request.UserUpdateDTO;
+import com.BUS.DayFrame.dto.response.ApiResponseDTO;
+import com.BUS.DayFrame.dto.response.UserInfoResponseDTO;
+import com.BUS.DayFrame.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/users")
 public class UserController {
-
     private final UserService userService;
 
     public UserController(UserService userService) {
@@ -25,71 +21,28 @@ public class UserController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<ErrorResponse> register(@Valid @RequestBody UserCreateDTO request) {
-        try {
-            userService.registerUser(request);
-            return ResponseEntity.ok(ErrorResponse.success("create success"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("가입실패", e.getMessage()));
-        }
+    public ApiResponseDTO<String> register(@Valid @RequestBody UserCreateDTO request) {
+        userService.registerUser(request);
+        return ApiResponseDTO.success("회원가입이 완료되었습니다.");
     }
 
 
-
     @GetMapping("/info")
-    public ResponseEntity<?> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
-            return ResponseEntity.status(401).body(new ErrorResponse("unauthorized", "로그인이 필요합니다."));
-        }
-
-        User user = userService.getUserByEmail(userDetails.getUsername());
-        UserInfoResponse response = new UserInfoResponse(user);
-
-        return ResponseEntity.ok(response);
+    public ApiResponseDTO<UserInfoResponseDTO> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
+        return ApiResponseDTO.success(userService.getUserByEmail(userDetails.getUsername()));
     }
 
 
     @PutMapping("/info")
-    public ResponseEntity<?> updateUser(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody Map<String, String> requestBody) {
-
-        if (userDetails == null) {
-            return ResponseEntity.status(403).body(new ErrorResponse("forbidden", "authentication required"));
-        }
-
-        // JWT 토큰에서 로그인한 유저 정보 가져오기
-        User user = userService.getUserByEmail(userDetails.getUsername());
-
-        String password = requestBody.get("password");
-        String name = requestBody.get("name");
-
-        // 사용자 정보 업데이트
-        User updatedUser = userService.updateUser(user.getId(), password, name);
-
-        return ResponseEntity.ok(new UserInfoResponse(updatedUser));
+    public ApiResponseDTO<UserInfoResponseDTO> updateUser(@AuthenticationPrincipal UserDetails userDetails,
+                                                          @RequestBody UserUpdateDTO updateDTO) {
+        return ApiResponseDTO.success(userService.updateUser(userDetails.getUsername(), updateDTO));
     }
-
 
 
     @DeleteMapping("/info")
-    public ResponseEntity<?> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
-            return ResponseEntity.status(403).body(new ErrorResponse("forbidden", "authentication required"));
-        }
-
-        User user = userService.getUserByEmail(userDetails.getUsername());
-        if (user == null) {
-            return ResponseEntity.status(404).body(new ErrorResponse("not_found", "not_found user"));
-        }
-
-        System.out.println("delete " + user.getEmail());
-        userService.deleteUser(user.getId());
-
-        return ResponseEntity.ok().body(new ErrorResponse("success", "delte user"));
+    public ApiResponseDTO<String> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
+        userService.deleteUser(userDetails.getUsername());
+        return ApiResponseDTO.success("사용자 정보가 삭제되었습니다.");
     }
-
 }
-
-
-
