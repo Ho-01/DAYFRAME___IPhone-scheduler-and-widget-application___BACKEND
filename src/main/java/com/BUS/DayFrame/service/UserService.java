@@ -5,8 +5,10 @@ import com.BUS.DayFrame.dto.request.UserCreateDTO;
 import com.BUS.DayFrame.dto.request.UserUpdateDTO;
 import com.BUS.DayFrame.dto.response.UserResponseDTO;
 import com.BUS.DayFrame.repository.UserRepository;
+import com.BUS.DayFrame.security.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +20,10 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Transactional // DB 일관성 유지, 에러 발생 시 롤백
     public User createUser(UserCreateDTO userCreateDTO) {
-
         // 가입 시 이메일 중복 검사
         Optional<User> existingUser = userRepository.findByEmail(userCreateDTO.getEmail());
         if (existingUser.isPresent()) {
@@ -39,11 +41,24 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional(readOnly = true)
+    public UserResponseDTO getUserInfo(UserDetails userDetails) {
+        // CustomUserDetailsService를 통해 사용자 정보 로드
+        UserDetails loadedUser = customUserDetailsService.loadUserByUsername(userDetails.getUsername());
+
+        User user = userRepository.findByEmail(loadedUser.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
+
+        return new UserResponseDTO(user.getEmail(), user.getName());
+    }
+
     @Transactional
     public UserResponseDTO updateUser(UserUpdateDTO userUpdateDTO, UserDetails userDetails) {
-        // 현재 로그인한 사용자의 정보를 가져옴
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+        // CustomUserDetailsService를 통해 사용자 정보 로드
+        UserDetails loadedUser = customUserDetailsService.loadUserByUsername(userDetails.getUsername());
+
+        User user = userRepository.findByEmail(loadedUser.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
 
         // 이름 변경
         if (userUpdateDTO.getName() != null && !userUpdateDTO.getName().isEmpty()) {
@@ -63,9 +78,11 @@ public class UserService {
 
     @Transactional
     public void deleteUser(UserDetails userDetails) {
-        // 현재 로그인한 사용자의 정보를 가져옴
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+        // CustomUserDetailsService를 통해 사용자 정보 로드
+        UserDetails loadedUser = customUserDetailsService.loadUserByUsername(userDetails.getUsername());
+
+        User user = userRepository.findByEmail(loadedUser.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
 
         // 계정 삭제
         userRepository.delete(user);

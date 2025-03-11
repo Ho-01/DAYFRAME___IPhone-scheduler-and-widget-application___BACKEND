@@ -1,14 +1,14 @@
 package com.BUS.DayFrame.controller;
 
 import com.BUS.DayFrame.dto.request.LoginRequestDTO;
+import com.BUS.DayFrame.dto.response.ApiResponseDTO;
 import com.BUS.DayFrame.dto.response.LoginResponseDTO;
+import com.BUS.DayFrame.dto.response.TokenResponseDTO;
 import com.BUS.DayFrame.service.AuthService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -18,33 +18,20 @@ public class AuthController {
 
     // 로그인 API (JWT 발급)
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest) {
-        LoginResponseDTO response = authService.login(loginRequest);
-        return ResponseEntity.ok(response);
+    public ApiResponseDTO<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest) {
+        return ApiResponseDTO.success(authService.login(loginRequest));
     }
 
-    // 토큰 갱신
+    // 토큰 갱신 (인증된 사용자 정보 활용)
     @PostMapping("/token")
-    public ResponseEntity<Map<String, String>> refreshAccessToken(@RequestHeader("Authorization") String refreshTokenHeader) {
-        // Bearer 토큰 형식 확인
-        if (!refreshTokenHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "잘못된 토큰 형식입니다."));
-        }
-
-        String refreshToken = refreshTokenHeader.substring(7); // "Bearer " 제거
-
-        // 새로운 Access Token 및 Refresh Token 발급
-        Map<String, String> tokens = authService.refreshAccessToken(refreshToken);
-        return ResponseEntity.ok(tokens);
+    public ApiResponseDTO<TokenResponseDTO> refreshAccessToken(@AuthenticationPrincipal UserDetails userDetails) {
+        return ApiResponseDTO.success(authService.refreshAccessToken(userDetails.getUsername()));
     }
 
+    // 로그아웃 (인증된 사용자 정보 활용)
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String refreshTokenHeader) {
-        if (refreshTokenHeader == null || !refreshTokenHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("유효하지 않은 Refresh Token 형식입니다.");
-        }
-        String refreshToken = refreshTokenHeader.substring(7); // "Bearer " 제거 후 토큰 추출
-        authService.logout(refreshToken);
-        return ResponseEntity.ok(Map.of("message", "로그아웃 성공"));
+    public ApiResponseDTO<String> logout(@AuthenticationPrincipal UserDetails userDetails) {
+        authService.logout(userDetails.getUsername());
+        return ApiResponseDTO.success("로그아웃이 완료되었습니다.");
     }
 }

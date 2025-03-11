@@ -17,6 +17,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    // 유니크걸기
     @Column(nullable = false)
     private String email;
 

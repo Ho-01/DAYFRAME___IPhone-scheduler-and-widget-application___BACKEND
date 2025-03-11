@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, String> {
     Optional<RefreshToken> findByToken(String token); // 리프레시 토큰으로 조회
+    Optional<RefreshToken> findByEmail(String email); // 이메일로 리프레시 토큰 조회
     void deleteByEmail(String email);
 }

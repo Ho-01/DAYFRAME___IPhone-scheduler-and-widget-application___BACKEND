@@ -1,82 +1,76 @@
 package com.BUS.DayFrame.service;
 
 import com.BUS.DayFrame.domain.RefreshToken;
-import com.BUS.DayFrame.domain.User;
 import com.BUS.DayFrame.dto.request.LoginRequestDTO;
 import com.BUS.DayFrame.dto.response.LoginResponseDTO;
+import com.BUS.DayFrame.dto.response.TokenResponseDTO;
 import com.BUS.DayFrame.repository.RefreshTokenRepository;
-import com.BUS.DayFrame.repository.UserRepository;
+import com.BUS.DayFrame.security.service.CustomUserDetailsService;
 import com.BUS.DayFrame.security.util.JwtTokenUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final PasswordEncoder passwordEncoder;
     private final JwtTokenUtil jwtTokenUtil;
+    private final AuthenticationManager authenticationManager;
+    private final CustomUserDetailsService userDetailsService;
 
     // 로그인
     @Transactional
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
-        Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
-        if (userOptional.isEmpty() || !passwordEncoder.matches(loginRequest.getPassword(), userOptional.get().getPassword())) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
-        }
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
-        User user = userOptional.get();
-        String accessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
-        String refreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
+        UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.getEmail());
 
-        refreshTokenRepository.deleteByEmail(user.getEmail()); // 기존 Refresh Token 삭제
-        refreshTokenRepository.save(new RefreshToken(user.getEmail(), refreshToken, LocalDateTime.now().plusDays(7)));
+        String accessToken = jwtTokenUtil.generateAccessToken(userDetails.getUsername());
+        String refreshToken = jwtTokenUtil.generateRefreshToken(userDetails.getUsername());
+
+        // 기존 Refresh Token 삭제 후 새로 저장
+        refreshTokenRepository.deleteByEmail(userDetails.getUsername());
+        refreshTokenRepository.save(new RefreshToken(userDetails.getUsername(), refreshToken, LocalDateTime.now().plusDays(7)));
 
         return new LoginResponseDTO(accessToken, refreshToken);
     }
 
-    // 토큰 재발급
+    // 토큰 재발급 (TokenResponseDTO 반환)
     @Transactional
-    public Map<String, String> refreshAccessToken(String refreshToken) {
-        // DB에서 Refresh Token 조회
-        RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
+    public TokenResponseDTO refreshAccessToken(String email) {
+        RefreshToken storedToken = refreshTokenRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 Refresh Token입니다."));
 
-        // Refresh Token이 만료되었는지 확인
         if (storedToken.getExpireDate().isBefore(LocalDateTime.now())) {
-            refreshTokenRepository.delete(storedToken); // 만료된 토큰 삭제
+            refreshTokenRepository.delete(storedToken);
             throw new IllegalArgumentException("토큰이 만료되었습니다. 다시 로그인하세요.");
         }
 
-        // 새로운 Access Token & Refresh Token 발급
-        String newAccessToken = jwtTokenUtil.generateAccessToken(storedToken.getEmail());
-        String newRefreshToken = jwtTokenUtil.generateRefreshToken(storedToken.getEmail());
+        // 사용자 정보 조회
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-        // 기존 Refresh Token 삭제 후 새 Refresh Token 저장
+        String newAccessToken = jwtTokenUtil.generateAccessToken(userDetails.getUsername());
+        String newRefreshToken = jwtTokenUtil.generateRefreshToken(userDetails.getUsername());
+
+        // 기존 Refresh Token 삭제 후 새로 저장
         refreshTokenRepository.delete(storedToken);
-        refreshTokenRepository.save(new RefreshToken(storedToken.getEmail(), newRefreshToken, LocalDateTime.now().plusDays(7)));
+        refreshTokenRepository.save(new RefreshToken(userDetails.getUsername(), newRefreshToken, LocalDateTime.now().plusDays(7)));
 
-        // 새로운 토큰 반환
-        return Map.of(
-                "accessToken", newAccessToken,
-                "refreshToken", newRefreshToken
-        );
+        return new TokenResponseDTO(newAccessToken, newRefreshToken);
     }
 
     // 로그아웃
     @Transactional
-    public void logout(String refreshToken) {
-        RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 Refresh Token입니다."));
-
-        refreshTokenRepository.delete(storedToken); // Refresh Token 삭제
+    public void logout(String email) {
+        refreshTokenRepository.deleteByEmail(email);
     }
 }
