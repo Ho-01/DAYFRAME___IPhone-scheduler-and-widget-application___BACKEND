@@ -1,31 +1,31 @@
 package com.BUS.DayFrame.domain;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@NoArgsConstructor
-@Table(name = "RefreshToken")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken {
-
     @Id
+    @GeneratedValue
+    private Long id;
+
+    //유니크걸기
     private String email;
-    private String token;
-    private LocalDateTime expireDate;
+    private String refreshToken;
+    private LocalDateTime expirationTime;
 
-    public RefreshToken(String email, String token, LocalDateTime expireDate) {
+    @Builder
+    public RefreshToken(String email, String refreshToken, LocalDateTime expirationTime) {
         this.email = email;
-        this.token = token;
-        this.expireDate = expireDate;
-    }
-
-    public LocalDateTime getExpireDate() {
-        return expireDate;
+        this.refreshToken = refreshToken;
+        this.expirationTime = expirationTime;
     }
 }

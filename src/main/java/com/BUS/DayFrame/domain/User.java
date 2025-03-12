@@ -1,21 +1,21 @@
 package com.BUS.DayFrame.domain;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Getter
-@NoArgsConstructor
-@Table(name = "\"User\"") // User는 예약어이므로 "User" 사용
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "\"USER\"")
 public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     // 유니크걸기
     @Column(nullable = false)
@@ -33,6 +33,11 @@ public class User {
     @Builder
     public User(String email, String password, String name) {
         this.email = email;
+        this.password = password;
+        this.name = name;
+    }
+
+    public void updateUserInfo(String password, String name) {
         this.password = password;
         this.name = name;
     }

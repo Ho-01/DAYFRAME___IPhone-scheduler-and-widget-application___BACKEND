@@ -2,7 +2,7 @@ package com.BUS.DayFrame.security.config;
 
 import com.BUS.DayFrame.security.filter.JwtAuthenticationFilter;
 import com.BUS.DayFrame.security.service.CustomUserDetailsService;
-import com.BUS.DayFrame.security.util.JwtTokenUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,37 +13,34 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import java.util.List;
 
 @Configuration
 public class SecurityConfig {
-
-    private final JwtTokenUtil jwtTokenUtil;
-
-    public SecurityConfig(JwtTokenUtil jwtTokenUtil) {
-        this.jwtTokenUtil = jwtTokenUtil;
-    }
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtTokenUtil jwtTokenUtil, CustomUserDetailsService userDetailsService) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable())  // CSRF 비활성화 (JWT 사용 시 필요)
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**", "/auth/login", "/users/register").permitAll()  // 인증 없이 접근 가능
-                        .anyRequest().authenticated()  // 나머지 요청은 인증 필요
+                        .requestMatchers("/auth/login", "/users/register").permitAll() // 로그인, 회원가입은 인증 없이 가능
+                        .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT 사용 → 세션 X
-                .headers(headers -> headers.frameOptions().disable())  // H2 콘솔을 위해 iframe 허용
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenUtil, userDetailsService), UsernamePasswordAuthenticationFilter.class) // 🔥 수정됨
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // JWT 필터 추가
                 .build();
     }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
+    
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
     }
 }

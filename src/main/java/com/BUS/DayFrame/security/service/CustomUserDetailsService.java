@@ -1,29 +1,27 @@
 package com.BUS.DayFrame.security.service;
 
-import com.BUS.DayFrame.repository.UserRepository;
-import org.springframework.security.core.userdetails.User;
+import com.BUS.DayFrame.domain.User;
+import com.BUS.DayFrame.repository.UserJpaRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
-    private final UserRepository userRepository;
-
-    public CustomUserDetailsService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    @Autowired
+    private UserJpaRepository userJpaRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) {
-        return userRepository.findByEmail(email)
-                .map(user -> {
-                    User.UserBuilder builder = org.springframework.security.core.userdetails.User.withUsername(user.getEmail());
-                    builder.password(user.getPassword());
-                    builder.roles("USER"); // 기본적으로 USER 역할 부여 (필요하면 변경 가능)
-                    return builder.build();
-                })
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    public UserDetails loadUserByUsername(String email){
+        User user = userJpaRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+        return org.springframework.security.core.userdetails.User
+                .withUsername(user.getEmail())
+                .password(user.getPassword())
+                .build();
     }
 }

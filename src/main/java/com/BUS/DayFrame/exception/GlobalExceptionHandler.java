@@ -1,5 +1,6 @@
 package com.BUS.DayFrame.exception;
 
+
 import com.BUS.DayFrame.dto.response.ApiResponseDTO;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -50,4 +51,5 @@ public class GlobalExceptionHandler {
                 .body(ApiResponseDTO.error("INTERNAL_ERROR", "서버 내부 오류가 발생했습니다."));
     }
 }
+
 

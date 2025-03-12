@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
 public class AuthController {
-    private final AuthService authService;
+    @Autowired
+    private AuthService authService;
 
     // 로그인 API (JWT 발급)
     @PostMapping("/login")
@@ -25,7 +25,7 @@ public class AuthController {
     // 토큰 갱신 (인증된 사용자 정보 활용)
     @PostMapping("/token")
     public ApiResponseDTO<TokenResponseDTO> refreshAccessToken(@AuthenticationPrincipal UserDetails userDetails) {
-        return ApiResponseDTO.success(authService.refreshAccessToken(userDetails.getUsername()));
+        return ApiResponseDTO.success(authService.tokenRefresh(userDetails.getUsername()));
     }
 
     // 로그아웃 (인증된 사용자 정보 활용)

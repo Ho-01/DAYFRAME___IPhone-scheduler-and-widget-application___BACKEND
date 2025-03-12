@@ -2,89 +2,55 @@ package com.BUS.DayFrame.service;
 
 import com.BUS.DayFrame.domain.User;
 import com.BUS.DayFrame.dto.request.UserCreateDTO;
-import com.BUS.DayFrame.dto.request.UserUpdateDTO;
 import com.BUS.DayFrame.dto.response.UserResponseDTO;
-import com.BUS.DayFrame.repository.UserRepository;
-import com.BUS.DayFrame.security.service.CustomUserDetailsService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import com.BUS.DayFrame.dto.request.UserUpdateDTO;
+import com.BUS.DayFrame.repository.RefreshTokenJpaRepository;
+import com.BUS.DayFrame.repository.UserJpaRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 @Service
-@RequiredArgsConstructor
 public class UserService {
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final CustomUserDetailsService customUserDetailsService;
+    @Autowired
+    private UserJpaRepository userJpaRepository;
+    @Autowired
+    private RefreshTokenJpaRepository refreshTokenJpaRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-    @Transactional // DB 일관성 유지, 에러 발생 시 롤백
-    public User createUser(UserCreateDTO userCreateDTO) {
-        // 가입 시 이메일 중복 검사
-        Optional<User> existingUser = userRepository.findByEmail(userCreateDTO.getEmail());
-        if (existingUser.isPresent()) {
+    @Transactional
+    public void register(UserCreateDTO userCreateDTO){
+        if (userJpaRepository.findByEmail(userCreateDTO.getEmail()).isPresent()) {
             throw new IllegalArgumentException("이미 가입된 이메일입니다.");
         }
-
-        // 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(userCreateDTO.getPassword());
-
-        User user = User.builder()
-                .email(userCreateDTO.getEmail())
-                .password(encodedPassword) // 암호화된 패스워드 저장
-                .name(userCreateDTO.getName())
-                .build();
-        return userRepository.save(user);
+        User user = new User(
+                userCreateDTO.getEmail(),
+                passwordEncoder.encode(userCreateDTO.getPassword()),
+                userCreateDTO.getName());
+        userJpaRepository.save(user);
     }
 
-    @Transactional(readOnly = true)
-    public UserResponseDTO getUserInfo(UserDetails userDetails) {
-        // CustomUserDetailsService를 통해 사용자 정보 로드
-        UserDetails loadedUser = customUserDetailsService.loadUserByUsername(userDetails.getUsername());
-
-        User user = userRepository.findByEmail(loadedUser.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
-
-        return new UserResponseDTO(user.getEmail(), user.getName());
+    public UserResponseDTO getUserInfo(String email){
+        User user = userJpaRepository.findByEmail(email)
+                .orElseThrow(()-> new EntityNotFoundException("email: "+email+" 에 해당하는 user를 잧을 수 없음."));
+        return new UserResponseDTO(user.getEmail(), user.getName(), user.getCreatedAt());
     }
 
     @Transactional
-    public UserResponseDTO updateUser(UserUpdateDTO userUpdateDTO, UserDetails userDetails) {
-        // CustomUserDetailsService를 통해 사용자 정보 로드
-        UserDetails loadedUser = customUserDetailsService.loadUserByUsername(userDetails.getUsername());
-
-        User user = userRepository.findByEmail(loadedUser.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
-
-        // 이름 변경
-        if (userUpdateDTO.getName() != null && !userUpdateDTO.getName().isEmpty()) {
-            userRepository.updateName(user.getId(), userUpdateDTO.getName());
-        }
-
-        // 비밀번호 변경
-        if (userUpdateDTO.getPassword() != null && !userUpdateDTO.getPassword().isEmpty()) {
-            String encodedPassword = passwordEncoder.encode(userUpdateDTO.getPassword());
-            userRepository.updatePassword(user.getId(), encodedPassword);
-        }
-
-        // 변경된 사용자 정보 반환
-        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
-        return new UserResponseDTO(updatedUser.getEmail(), updatedUser.getName());
+    public UserResponseDTO updateUserInfo(String email, UserUpdateDTO userUpdateDTO){
+        User user = userJpaRepository.findByEmail(email)
+                .orElseThrow(()-> new EntityNotFoundException("email: "+email+" 에 해당하는 user를 잧을 수 없음."));
+        user.updateUserInfo(passwordEncoder.encode(userUpdateDTO.getPassword()), userUpdateDTO.getName());
+        return new UserResponseDTO(user.getEmail(), user.getName(), user.getCreatedAt());
     }
-
     @Transactional
-    public void deleteUser(UserDetails userDetails) {
-        // CustomUserDetailsService를 통해 사용자 정보 로드
-        UserDetails loadedUser = customUserDetailsService.loadUserByUsername(userDetails.getUsername());
-
-        User user = userRepository.findByEmail(loadedUser.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("유저를 찾을 수 없습니다."));
-
-        // 계정 삭제
-        userRepository.delete(user);
+    public void deleteUser(String email){
+        User user = userJpaRepository.findByEmail(email)
+                .orElseThrow(()-> new EntityNotFoundException("email: "+email+" 에 해당하는 user를 잧을 수 없음."));
+        refreshTokenJpaRepository.deleteByEmail(user.getEmail());
+        userJpaRepository.delete(user);
     }
 }
