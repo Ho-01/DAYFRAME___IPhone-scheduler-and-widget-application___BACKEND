@@ -32,6 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null && token.startsWith("Bearer ")) {
             token = token.replace("Bearer ", "");
+
             jwtTokenUtil.validateToken(token);
             String email = jwtTokenUtil.extractEmail(token);
             UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);

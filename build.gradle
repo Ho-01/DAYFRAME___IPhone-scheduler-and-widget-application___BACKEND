@@ -22,8 +22,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	//implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-	// H2 Database (테스트용)
+  // H2 Database (테스트용)
 	runtimeOnly 'com.h2database:h2'
 
 	// 테스트 관련 의존성

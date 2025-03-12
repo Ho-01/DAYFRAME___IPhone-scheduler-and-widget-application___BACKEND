@@ -18,8 +18,8 @@ public class AuthController {
 
     // 로그인 API (JWT 발급)
     @PostMapping("/login")
-    public ApiResponseDTO<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest) {
-        return ApiResponseDTO.success(authService.login(loginRequest));
+    public ApiResponseDTO<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+        return ApiResponseDTO.success(authService.login(loginRequestDTO));
     }
 
     // 토큰 갱신 (인증된 사용자 정보 활용)

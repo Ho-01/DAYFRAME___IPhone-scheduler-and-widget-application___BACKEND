@@ -1,6 +1,5 @@
 package com.BUS.DayFrame.exception;
 
-
 import com.BUS.DayFrame.dto.response.ApiResponseDTO;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -18,7 +17,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ApiResponseDTO<?>> handleEntityNotFoundException(EntityNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponseDTO.error("ENTITY_NOT_FOUND", "요청한 엔티티를 찾을 수 없습니다."));
+                .body(ApiResponseDTO.error("ENTITY_NOT_FOUND", ex.getMessage()));
     }
 
     @ExceptionHandler(ExpiredJwtException.class)
@@ -45,11 +44,15 @@ public class GlobalExceptionHandler {
                 .body(ApiResponseDTO.error("BAD_REQUEST", ex.getMessage()));
     }
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponseDTO<?>> handleRuntimeException(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponseDTO.error("RUNTIME_ERROR", "런타임 에러(뛰는 도중 넘어짐)가 발생했습니다."));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponseDTO<?>> handleGlobalException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponseDTO.error("INTERNAL_ERROR", "서버 내부 오류가 발생했습니다."));
     }
 }
-
-

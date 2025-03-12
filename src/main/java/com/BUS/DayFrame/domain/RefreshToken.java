@@ -17,7 +17,6 @@ public class RefreshToken {
     @GeneratedValue
     private Long id;
 
-    //유니크걸기
     private String email;
     private String refreshToken;
     private LocalDateTime expirationTime;

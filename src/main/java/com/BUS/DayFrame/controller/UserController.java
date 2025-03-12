@@ -20,13 +20,13 @@ public class UserController {
     @PostMapping("/register")
     public ApiResponseDTO<?> register(@RequestBody UserCreateDTO userCreateDTO) {
         userService.register(userCreateDTO);
-        return ApiResponseDTO.success();
+        return ApiResponseDTO.success("회원가입이 완료되었습니다.");
     }
 
     // 현재 로그인한 사용자 정보 조회
     @GetMapping("/info")
     public ApiResponseDTO<UserResponseDTO> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
-        UserResponseDTO userInfo = userService.getUserInfo(userDetails);
+        UserResponseDTO userInfo = userService.getUserInfo(userDetails.getUsername());
         return ApiResponseDTO.success(userInfo);
     }
 
