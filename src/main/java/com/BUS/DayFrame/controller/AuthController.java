@@ -18,7 +18,7 @@ public class AuthController {
 
     // 로그인 API (JWT 발급)
     @PostMapping("/login")
-    public ApiResponseDTO<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+    public ApiResponseDTO<TokenResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO) {
         return ApiResponseDTO.success(authService.login(loginRequestDTO));
     }
 
