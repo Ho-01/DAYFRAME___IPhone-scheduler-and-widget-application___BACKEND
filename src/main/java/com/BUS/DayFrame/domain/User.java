@@ -17,6 +17,7 @@ public class User {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 유니크걸기
     @Column(nullable = false)
     private String email;
 
@@ -30,7 +31,7 @@ public class User {
     private final LocalDateTime createdAt = LocalDateTime.now();
 
     @Builder
-    public User(String email, String password, String name){
+    public User(String email, String password, String name) {
         this.email = email;
         this.password = password;
         this.name = name;

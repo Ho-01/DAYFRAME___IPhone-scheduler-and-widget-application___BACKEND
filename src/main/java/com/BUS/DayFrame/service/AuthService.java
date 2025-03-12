@@ -11,7 +11,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 
 @Service
@@ -48,9 +47,10 @@ public class AuthService {
 
     @Transactional
     public TokenResponseDTO tokenRefresh(String email){
+        refreshTokenJpaRepository.deleteByEmail(email);
         String accessToken = jwtTokenUtil.generateAccessToken(email);
         String refreshToken = jwtTokenUtil.generateRefreshToken(email);
-        refreshTokenJpaRepository.deleteByEmail(email);
+
         refreshTokenJpaRepository.save(new RefreshToken(
                 email,
                 refreshToken,

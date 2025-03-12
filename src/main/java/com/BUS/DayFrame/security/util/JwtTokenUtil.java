@@ -17,9 +17,6 @@ import java.util.Date;
 
 @Component
 public class JwtTokenUtil {
-    @Autowired
-    private RefreshTokenJpaRepository refreshTokenJpaRepository;
-
     private final SecretKey secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode("secretkeysecretkeysecretkeysecretkeysecretkeysecretkey"));
     public final long ACCESS_TOKEN_EXPIRATION = 1000*60*15; // 15분
     public final long REFRESH_TOKEN_EXPIRATION = 1000*60*60*24*7; // 1주일

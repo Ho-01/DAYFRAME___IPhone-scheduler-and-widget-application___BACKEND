@@ -1,5 +1,7 @@
 package com.BUS.DayFrame.exception;
 
+
+import com.BUS.DayFrame.dto.response.ApiResponseDTO;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.persistence.EntityNotFoundException;
@@ -9,70 +11,45 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.security.SignatureException;
-import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleEntityNotFoundException(EntityNotFoundException ex) {
+    public ResponseEntity<ApiResponseDTO<?>> handleEntityNotFoundException(EntityNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of(
-                        "success", false,
-                        "error", "ENTITY_NOT_FOUND",
-                        "message", ex.getMessage()
-                ));
+                .body(ApiResponseDTO.error("ENTITY_NOT_FOUND", "요청한 엔티티를 찾을 수 없습니다."));
     }
 
     @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<Map<String, Object>> handleExpiredJwtException(ExpiredJwtException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                Map.of(
-                        "success", false,
-                        "error", Map.of(
-                                "code", "expired_token",
-                                "message", "토큰이 만료되었습니다."
-                        )
-                )
-        );
+    public ResponseEntity<ApiResponseDTO<?>> handleExpiredJwtException(ExpiredJwtException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponseDTO.error("EXPIRED_TOKEN", "토큰이 만료되었습니다."));
     }
 
     @ExceptionHandler(SignatureException.class)
-    public ResponseEntity<Map<String, Object>> handleSignatureException(SignatureException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                Map.of(
-                        "success", false,
-                        "error", Map.of(
-                                "code", "invalid_signature",
-                                "message", "토큰 서명이 올바르지 않습니다."
-                        )
-                )
-        );
+    public ResponseEntity<ApiResponseDTO<?>> handleSignatureException(SignatureException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponseDTO.error("INVALID_SIGNATURE", "토큰 서명이 유효하지 않습니다."));
     }
 
     @ExceptionHandler(MalformedJwtException.class)
-    public ResponseEntity<Map<String, Object>> handleMalformedJwtException(MalformedJwtException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                Map.of(
-                        "success", false,
-                        "error", Map.of(
-                                "code", "malformed_token",
-                                "message", "토큰 형식이 올바르지 않습니다."
-                        )
-                )
-        );
+    public ResponseEntity<ApiResponseDTO<?>> handleMalformedJwtException(MalformedJwtException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponseDTO.error("MALFORMED_TOKEN", "토큰 형식이 올바르지 않습니다."));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponseDTO<?>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponseDTO.error("BAD_REQUEST", ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                Map.of(
-                        "success", false,
-                        "error", Map.of(
-                                "code", "internal_error",
-                                "message", "서버 내부 오류가 발생했습니다."
-                        )
-                )
-        );
+    public ResponseEntity<ApiResponseDTO<?>> handleGlobalException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponseDTO.error("INTERNAL_ERROR", "서버 내부 오류가 발생했습니다."));
     }
 }
+
+

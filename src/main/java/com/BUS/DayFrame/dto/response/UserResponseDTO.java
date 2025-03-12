@@ -1,15 +1,12 @@
 package com.BUS.DayFrame.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Getter
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class UserResponseDTO {
-    private final Long id;
-    private final String email;
-    private final String name;
-    private final LocalDateTime createdAt;
+    private String email;
+    private String name;
+    private LocalDateTime createdAt;
 }

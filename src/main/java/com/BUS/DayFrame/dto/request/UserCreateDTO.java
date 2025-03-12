@@ -1,13 +1,12 @@
 package com.BUS.DayFrame.dto.request;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class UserCreateDTO {
-    private final String email;
-    private final String password;
-    private final String name;
-
+    private  String email;
+    private  String password;
+    private  String name;
 }
