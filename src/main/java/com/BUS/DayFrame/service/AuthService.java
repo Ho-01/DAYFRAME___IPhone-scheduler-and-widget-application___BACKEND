@@ -1,94 +1,61 @@
 package com.BUS.DayFrame.service;
 
-import com.BUS.DayFrame.dto.response.TokenResponseDTO;
 import com.BUS.DayFrame.domain.RefreshToken;
-import com.BUS.DayFrame.domain.User;
-import com.BUS.DayFrame.repository.RefreshTokenRepository;
-import com.BUS.DayFrame.repository.UserRepository;
+import com.BUS.DayFrame.dto.request.LoginRequestDTO;
+import com.BUS.DayFrame.dto.response.TokenResponseDTO;
+import com.BUS.DayFrame.repository.RefreshTokenJpaRepository;
 import com.BUS.DayFrame.security.util.JwtTokenUtil;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
 @Service
 public class AuthService {
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+    @Autowired
+    private RefreshTokenJpaRepository refreshTokenJpaRepository;
 
-    private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtTokenUtil jwtTokenUtil;
-
-    public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
-                       PasswordEncoder passwordEncoder, JwtTokenUtil jwtTokenUtil) {
-        this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtTokenUtil = jwtTokenUtil;
+    @Transactional
+    public TokenResponseDTO login(LoginRequestDTO loginRequestDTO){
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequestDTO.getEmail(),
+                        loginRequestDTO.getPassword()
+                )
+        );
+        String accessToken = jwtTokenUtil.generateAccessToken(loginRequestDTO.getEmail());
+        String refreshToken = jwtTokenUtil.generateRefreshToken(loginRequestDTO.getEmail());
+        refreshTokenJpaRepository.deleteByEmail(loginRequestDTO.getEmail());
+        refreshTokenJpaRepository.save(new RefreshToken(
+                        loginRequestDTO.getEmail(),
+                        refreshToken,
+                        LocalDateTime.now().plusSeconds(jwtTokenUtil.REFRESH_TOKEN_EXPIRATION/1000)));
+        return new TokenResponseDTO(accessToken,refreshToken);
     }
 
-
-    public TokenResponseDTO login(String email, String password) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-        }
-
-
-
-        String accessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
-        String refreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
-
-
-        RefreshToken tokenEntity = refreshTokenRepository.findByUser(user)
-                .orElse(new RefreshToken(user, refreshToken, LocalDateTime.now().plusSeconds(jwtTokenUtil.getRefreshExpirationInSeconds())));
-
-        tokenEntity.setRefreshToken(refreshToken);
-        tokenEntity.setExpirationTime(LocalDateTime.now().plusSeconds(jwtTokenUtil.getRefreshExpirationInSeconds()));
-
-        refreshTokenRepository.save(tokenEntity);
-
-        return new TokenResponseDTO(true, accessToken, refreshToken);
+    @Transactional
+    public void logout(String email){
+        refreshTokenJpaRepository.deleteByEmail(email);
     }
 
+    @Transactional
+    public TokenResponseDTO tokenRefresh(String email){
+        refreshTokenJpaRepository.deleteByEmail(email);
+        String accessToken = jwtTokenUtil.generateAccessToken(email);
+        String refreshToken = jwtTokenUtil.generateRefreshToken(email);
 
-
-
-    public void logout(String token) {
-        refreshTokenRepository.findByRefreshToken(token).ifPresent(refreshTokenRepository::delete);
+        refreshTokenJpaRepository.save(new RefreshToken(
+                email,
+                refreshToken,
+                LocalDateTime.now().plusSeconds(jwtTokenUtil.REFRESH_TOKEN_EXPIRATION/1000)));
+        return new TokenResponseDTO(accessToken, refreshToken);
     }
-
-
-    public TokenResponseDTO refreshToken(String refreshToken) {
-
-        RefreshToken tokenEntity = refreshTokenRepository.findByRefreshToken(refreshToken)
-                .orElseThrow(() -> new RuntimeException("not valid refresh token"));
-
-
-        if (tokenEntity.getExpirationTime().isBefore(LocalDateTime.now())) {
-            refreshTokenRepository.delete(tokenEntity);
-            throw new RuntimeException("Refresh Token is expired");
-        }
-
-
-        User user = tokenEntity.getUser();
-        if (user == null) {
-            refreshTokenRepository.delete(tokenEntity);
-            throw new RuntimeException("not found user");
-        }
-
-
-        refreshTokenRepository.delete(tokenEntity);
-        String newAccessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
-        String newRefreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
-
-
-        RefreshToken newToken = new RefreshToken(user, newRefreshToken, LocalDateTime.now().plusDays(7));
-        refreshTokenRepository.save(newToken);
-
-        return new TokenResponseDTO(true, newAccessToken, newRefreshToken);
-    }
-
 }

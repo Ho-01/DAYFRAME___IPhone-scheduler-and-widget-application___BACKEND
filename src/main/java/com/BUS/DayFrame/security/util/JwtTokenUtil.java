@@ -1,69 +1,56 @@
 package com.BUS.DayFrame.security.util;
 
-import com.BUS.DayFrame.domain.User;
-import io.jsonwebtoken.*;
+import com.BUS.DayFrame.domain.RefreshToken;
+import com.BUS.DayFrame.repository.RefreshTokenJpaRepository;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
+import javax.crypto.SecretKey;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Component
 public class JwtTokenUtil {
+    private final SecretKey secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode("secretkeysecretkeysecretkeysecretkeysecretkeysecretkey"));
+    public final long ACCESS_TOKEN_EXPIRATION = 1000*60*15; // 15분
+    public final long REFRESH_TOKEN_EXPIRATION = 1000*60*60*24*7; // 1주일
 
-    private final String SECRET_KEY = "1q2w3e4r1q2w3e4r1q2w3e4r1q2w3e4r!"; //
-
-    private final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 15; // 15분
-    private final long REFRESH_TOKEN_EXPIRATION = 1000 * 60 * 60 * 24 * 7; // 7일
-
-
-    public String generateAccessToken(String email) {
+    public String generateAccessToken(String email){
         return Jwts.builder()
-                .setSubject(email) //
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .subject(email)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis()+ACCESS_TOKEN_EXPIRATION))
+                .signWith(secretKey)
                 .compact();
     }
 
-
-    public String generateRefreshToken(String email) {
+    public String generateRefreshToken(String email){
         return Jwts.builder()
-                .setSubject(email)  //
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .subject(email)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis()+REFRESH_TOKEN_EXPIRATION))
+                .signWith(secretKey)
                 .compact();
     }
 
+    private Claims getClaims(String jwtToken){
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(jwtToken).getPayload();
+    }
+
+    public String extractEmail(String jwtToken) {
+        return getClaims(jwtToken).getSubject();
+    }
 
 
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
-            return true;
-        } catch (ExpiredJwtException e) {
-            System.out.println("token vaild" + e.getMessage());
+    public void validateToken(String jwtToken){
+        if(getClaims(jwtToken).getExpiration().before(new Date())){
+            throw new ExpiredJwtException(null, null, "");
         }
-        return false;
     }
-
-
-    public String extractEmail(String token) {
-        return Jwts.parser().setSigningKey(getSigningKey()).build()
-                .parseClaimsJws(token).getBody().getSubject();
-    }
-
-
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
-    }
-
-
-    public long getRefreshExpirationInSeconds() {
-        return REFRESH_TOKEN_EXPIRATION / 1000;
-    }
-
-
 }

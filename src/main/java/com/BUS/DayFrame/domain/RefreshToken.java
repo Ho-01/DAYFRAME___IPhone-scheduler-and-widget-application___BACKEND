@@ -1,42 +1,30 @@
 package com.BUS.DayFrame.domain;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
-@Table(name = "RefreshToken")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)  // delete user -> delete refresh token 용으로 만들어둠
-    private User user;
-
-    @Column(name = "refresh_token", length = 255, nullable = false)
+    private String email;
     private String refreshToken;
-
-    @Column(name = "expiration_time", nullable = false)
     private LocalDateTime expirationTime;
 
-    public RefreshToken(User user, String refreshToken, LocalDateTime expirationTime) {
-        this.user = user;
+    @Builder
+    public RefreshToken(String email, String refreshToken, LocalDateTime expirationTime) {
+        this.email = email;
         this.refreshToken = refreshToken;
         this.expirationTime = expirationTime;
     }
-
 }

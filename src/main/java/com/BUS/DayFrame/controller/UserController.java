@@ -3,9 +3,9 @@ package com.BUS.DayFrame.controller;
 import com.BUS.DayFrame.dto.request.UserCreateDTO;
 import com.BUS.DayFrame.dto.request.UserUpdateDTO;
 import com.BUS.DayFrame.dto.response.ApiResponseDTO;
-import com.BUS.DayFrame.dto.response.UserInfoResponseDTO;
+import com.BUS.DayFrame.dto.response.UserResponseDTO;
 import com.BUS.DayFrame.service.UserService;
-import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -13,36 +13,37 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
-
+    // 회원가입
     @PostMapping("/register")
-    public ApiResponseDTO<String> register(@Valid @RequestBody UserCreateDTO request) {
-        userService.registerUser(request);
+    public ApiResponseDTO<?> register(@RequestBody UserCreateDTO userCreateDTO) {
+        userService.register(userCreateDTO);
         return ApiResponseDTO.success("회원가입이 완료되었습니다.");
     }
 
-
+    // 현재 로그인한 사용자 정보 조회
     @GetMapping("/info")
-    public ApiResponseDTO<UserInfoResponseDTO> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
-        return ApiResponseDTO.success(userService.getUserByEmail(userDetails.getUsername()));
+    public ApiResponseDTO<UserResponseDTO> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
+        UserResponseDTO userInfo = userService.getUserInfo(userDetails.getUsername());
+        return ApiResponseDTO.success(userInfo);
     }
 
-
+    // 현재 로그인한 사용자 정보 수정
     @PutMapping("/info")
-    public ApiResponseDTO<UserInfoResponseDTO> updateUser(@AuthenticationPrincipal UserDetails userDetails,
-                                                          @RequestBody UserUpdateDTO updateDTO) {
-        return ApiResponseDTO.success(userService.updateUser(userDetails.getUsername(), updateDTO));
+    public ApiResponseDTO<UserResponseDTO> updateUserInfo(
+            @RequestBody UserUpdateDTO userUpdateDTO,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        UserResponseDTO updatedUser = userService.updateUserInfo(userDetails.getUsername(), userUpdateDTO);
+        return ApiResponseDTO.success(updatedUser);
     }
 
-
+    // 현재 로그인한 사용자 계정 삭제
     @DeleteMapping("/info")
-    public ApiResponseDTO<String> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
+    public ApiResponseDTO<?> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
         userService.deleteUser(userDetails.getUsername());
-        return ApiResponseDTO.success("사용자 정보가 삭제되었습니다.");
+        return ApiResponseDTO.success("회원 탈퇴 성공");
     }
 }

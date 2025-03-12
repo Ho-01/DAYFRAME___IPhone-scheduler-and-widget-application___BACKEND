@@ -5,7 +5,8 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class TokenResponseDTO {
-    private String accessToken;
-    private String refreshToken;
+public class UserResponseDTO {
+    private String email;
+    private String name;
+    private LocalDateTime createdAt;
 }

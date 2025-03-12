@@ -1,34 +1,27 @@
 package com.BUS.DayFrame.security.service;
 
 import com.BUS.DayFrame.domain.User;
-import com.BUS.DayFrame.repository.UserRepository;
+import com.BUS.DayFrame.repository.UserJpaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.util.Optional;
 
 @Service
-public class CustomUserDetailsService  implements UserDetailsService {
-
-    private final UserRepository userRepository;
-
+public class CustomUserDetailsService implements UserDetailsService {
     @Autowired
-    public CustomUserDetailsService (UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private UserJpaRepository userJpaRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("not found user"));
-
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                new ArrayList<>()
-        );
+    public UserDetails loadUserByUsername(String email){
+        User user = userJpaRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+        return org.springframework.security.core.userdetails.User
+                .withUsername(user.getEmail())
+                .password(user.getPassword())
+                .build();
     }
 }
