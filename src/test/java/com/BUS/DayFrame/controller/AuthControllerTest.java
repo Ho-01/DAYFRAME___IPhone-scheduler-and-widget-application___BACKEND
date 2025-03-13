@@ -56,9 +56,9 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequestDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.token.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.token.refreshToken").isNotEmpty());
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
     }
 
     @Test
@@ -69,7 +69,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/auth/logout")
                         .header("Authorization", "Bearer " + tokenResponseDTO.getAccessToken()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(jsonPath("$.data").value("로그아웃이 완료되었습니다."));
 
         Assertions.assertThat(refreshTokenJpaRepository.findByEmail(email)).isEmpty();
     }
@@ -82,8 +82,8 @@ class AuthControllerTest {
         mockMvc.perform(post("/auth/token")
                         .header("Authorization", "Bearer " + tokenResponseDTO.getAccessToken()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.token.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.token.refreshToken").isNotEmpty());
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
     }
 }

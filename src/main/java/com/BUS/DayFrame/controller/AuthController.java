@@ -2,10 +2,9 @@ package com.BUS.DayFrame.controller;
 
 import com.BUS.DayFrame.dto.request.LoginRequestDTO;
 import com.BUS.DayFrame.dto.response.ApiResponseDTO;
-import com.BUS.DayFrame.dto.response.LoginResponseDTO;
 import com.BUS.DayFrame.dto.response.TokenResponseDTO;
 import com.BUS.DayFrame.service.AuthService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;

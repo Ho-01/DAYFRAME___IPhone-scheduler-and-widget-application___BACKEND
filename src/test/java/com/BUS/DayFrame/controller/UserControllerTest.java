@@ -65,18 +65,17 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userCreateDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(jsonPath("$.data").value("회원가입이 완료되었습니다."));
 
         Assertions.assertThat(userJpaRepository.findByEmail(userCreateDTO.getEmail())).isPresent();
     }
 
     @Test
     void getUserInfo() throws Exception {
-        // When & Then
         mockMvc.perform(get("/users/info")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.data.email").value(email));
     }
 
@@ -89,7 +88,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userUpdateDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.error").doesNotExist())
                 .andExpect(jsonPath("$.data.name").value(userUpdateDTO.getName()));
 
         Assertions.assertThat(userJpaRepository.findByEmail(email).isPresent()).isEqualTo(true);
@@ -101,8 +100,8 @@ class UserControllerTest {
         mockMvc.perform(delete("/users/info")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("사용자가 성공적으로 삭제되었습니다"));
+                .andExpect(jsonPath("$.error").doesNotExist())
+                .andExpect(jsonPath("$.data").value("회원 탈퇴 성공"));
 
         Assertions.assertThat(userJpaRepository.findByEmail(email)).isEmpty();
     }

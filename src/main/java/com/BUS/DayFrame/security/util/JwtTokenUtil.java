@@ -1,18 +1,12 @@
 package com.BUS.DayFrame.security.util;
 
-import com.BUS.DayFrame.domain.RefreshToken;
-import com.BUS.DayFrame.repository.RefreshTokenJpaRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import javax.crypto.SecretKey;
-import java.time.LocalDateTime;
 import java.util.Date;
 
 @Component

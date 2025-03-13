@@ -5,7 +5,7 @@ import com.BUS.DayFrame.dto.request.UserUpdateDTO;
 import com.BUS.DayFrame.dto.response.ApiResponseDTO;
 import com.BUS.DayFrame.dto.response.UserResponseDTO;
 import com.BUS.DayFrame.service.UserService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;

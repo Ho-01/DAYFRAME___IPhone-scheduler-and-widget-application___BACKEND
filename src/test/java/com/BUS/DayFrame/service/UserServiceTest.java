@@ -43,7 +43,6 @@ class UserServiceTest{
     @Test
     void getUserInfo(){
         UserResponseDTO userResponseDTO = userService.getUserInfo(testUser.getEmail());
-        Assertions.assertThat(userResponseDTO.getId()).isEqualTo(testUser.getId());
         Assertions.assertThat(userResponseDTO.getEmail()).isEqualTo(testUser.getEmail());
         Assertions.assertThat(userResponseDTO.getName()).isEqualTo(testUser.getName());
         Assertions.assertThat(userResponseDTO.getCreatedAt()).isEqualTo(testUser.getCreatedAt());
@@ -57,7 +56,6 @@ class UserServiceTest{
     void updateUserInfo(){
         UserUpdateDTO userUpdateDTO = new UserUpdateDTO("newPassword","newName");
         UserResponseDTO userResponseDTO = userService.updateUserInfo(testUser.getEmail(), userUpdateDTO);
-        Assertions.assertThat(userResponseDTO.getId()).isEqualTo(testUser.getId());
         Assertions.assertThat(userResponseDTO.getEmail()).isEqualTo(testUser.getEmail());
         Assertions.assertThat(userResponseDTO.getName()).isEqualTo(userUpdateDTO.getName());
         User foundUser = userJpaRepository.findByEmail(userResponseDTO.getEmail())
