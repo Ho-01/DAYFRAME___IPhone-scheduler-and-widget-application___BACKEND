@@ -50,7 +50,7 @@ public class UserService {
     public void deleteUser(String email){
         User user = userJpaRepository.findByEmail(email)
                 .orElseThrow(()-> new EntityNotFoundException("email: "+email+" 에 해당하는 user를 잧을 수 없음."));
-        refreshTokenJpaRepository.deleteByEmail(user.getEmail());
+        refreshTokenJpaRepository.deleteByUserId(user.getId());
         userJpaRepository.delete(user);
     }
 }

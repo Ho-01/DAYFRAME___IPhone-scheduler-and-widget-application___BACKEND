@@ -40,12 +40,14 @@ class AuthControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private Long userId;
     private final String email = "test@example.com";
     private final String password = "testPassword";
 
     @BeforeEach
     void setUp() {
         userJpaRepository.save(new User(email, passwordEncoder.encode(password),"testUser"));
+        userId = userJpaRepository.findByEmail(email).get().getId();
     }
 
     @Test
@@ -71,7 +73,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value("로그아웃이 완료되었습니다."));
 
-        Assertions.assertThat(refreshTokenJpaRepository.findByEmail(email)).isEmpty();
+        Assertions.assertThat(refreshTokenJpaRepository.findById(userId)).isEmpty();
     }
 
     @Test

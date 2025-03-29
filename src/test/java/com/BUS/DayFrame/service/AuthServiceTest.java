@@ -36,12 +36,14 @@ class AuthServiceTest {
     @Autowired
     private UserJpaRepository userJpaRepository;
 
+    private Long userId;
     private final String email = "test@example.com";
     private final String password = "password";
     @BeforeEach
     void setUp() {
         User testUser = new User(email,passwordEncoder.encode(password),"testUser");
         userJpaRepository.save(testUser);
+        userId = userJpaRepository.findByEmail(email).get().getId();
     }
 
     @Test
@@ -49,23 +51,23 @@ class AuthServiceTest {
         TokenResponseDTO tokenResponseDTO = authService.login(new LoginRequestDTO(email, password));
         Assertions.assertThat(tokenResponseDTO.getAccessToken()).isNotEmpty();
         Assertions.assertThat(tokenResponseDTO.getRefreshToken()).isNotEmpty();
-        Assertions.assertThat(jwtTokenUtil.extractEmail(tokenResponseDTO.getAccessToken())).isEqualTo(email);
-        Assertions.assertThat(jwtTokenUtil.extractEmail(tokenResponseDTO.getRefreshToken())).isEqualTo(email);
+        Assertions.assertThat(jwtTokenUtil.extractUserId(tokenResponseDTO.getAccessToken())).isEqualTo(userId);
+        Assertions.assertThat(jwtTokenUtil.extractUserId(tokenResponseDTO.getRefreshToken())).isEqualTo(userId);
     }
 
     @Test
     void logout() {
         authService.login(new LoginRequestDTO(email, password));
-        Assertions.assertThat(refreshTokenJpaRepository.findByEmail(email).isPresent()).isEqualTo(true);
-        authService.logout(email);
-        Assertions.assertThat(refreshTokenJpaRepository.findByEmail(email).isPresent()).isEqualTo(false);
+        Assertions.assertThat(refreshTokenJpaRepository.findByUserId(userId).isPresent()).isEqualTo(true);
+        authService.logout(userId);
+        Assertions.assertThat(refreshTokenJpaRepository.findByUserId(userId).isPresent()).isEqualTo(false);
     }
 
     @Test
     void tokenRefresh() {
         authService.login(new LoginRequestDTO(email, password));
-        Assertions.assertThat(refreshTokenJpaRepository.findByEmail(email).isPresent()).isEqualTo(true);
-        authService.tokenRefresh(email);
-        Assertions.assertThat(refreshTokenJpaRepository.findByEmail(email).isPresent()).isEqualTo(true);
+        Assertions.assertThat(refreshTokenJpaRepository.findByUserId(userId).isPresent()).isEqualTo(true);
+        authService.tokenRefresh(userId);
+        Assertions.assertThat(refreshTokenJpaRepository.findByUserId(userId).isPresent()).isEqualTo(true);
     }
 }

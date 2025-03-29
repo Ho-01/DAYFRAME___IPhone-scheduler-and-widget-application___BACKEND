@@ -19,13 +19,13 @@ class RefreshTokenJpaRepositoryTest {
     private RefreshToken refreshToken;
     @BeforeEach
     void setUp() {
-        refreshToken = new RefreshToken("test@email.com","token", LocalDateTime.now());
+        refreshToken = new RefreshToken(1L,"token", LocalDateTime.now());
         refreshTokenJpaRepository.save(refreshToken);
     }
 
     @Test
     void deleteByEmail() {
-        refreshTokenJpaRepository.deleteByEmail(refreshToken.getEmail());
+        refreshTokenJpaRepository.deleteByUserId(refreshToken.getUserId());
         Assertions.assertThat(refreshTokenJpaRepository.findById(refreshToken.getId()).isPresent()).isEqualTo(false);
     }
 }

@@ -15,18 +15,18 @@ public class JwtTokenUtil {
     public final long ACCESS_TOKEN_EXPIRATION = 1000*60*15; // 15분
     public final long REFRESH_TOKEN_EXPIRATION = 1000*60*60*24*7; // 1주일
 
-    public String generateAccessToken(String email){
+    public String generateAccessToken(Long userId){
         return Jwts.builder()
-                .subject(email)
+                .subject(String.valueOf(userId))
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+ACCESS_TOKEN_EXPIRATION))
                 .signWith(secretKey)
                 .compact();
     }
 
-    public String generateRefreshToken(String email){
+    public String generateRefreshToken(Long userId){
         return Jwts.builder()
-                .subject(email)
+                .subject(String.valueOf(userId))
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+REFRESH_TOKEN_EXPIRATION))
                 .signWith(secretKey)
@@ -37,8 +37,8 @@ public class JwtTokenUtil {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(jwtToken).getPayload();
     }
 
-    public String extractEmail(String jwtToken) {
-        return getClaims(jwtToken).getSubject();
+    public Long extractUserId(String jwtToken) {
+        return Long.parseLong(getClaims(jwtToken).getSubject());
     }
 
 

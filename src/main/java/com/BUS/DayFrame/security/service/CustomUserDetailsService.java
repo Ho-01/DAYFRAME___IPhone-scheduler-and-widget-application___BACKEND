@@ -16,10 +16,12 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email){
         User user = userJpaRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                .password(user.getPassword())
-                .build();
+                .orElseThrow(() -> new EntityNotFoundException("email: "+email+" 에 해당하는 user를 잧을 수 없음."));
+        return new CustomUserDetails(user);
+    }
+    public UserDetails loadUserByUserId(Long userId){
+        User user = userJpaRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("id: "+userId+" 에 해당하는 user를 잧을 수 없음."));
+        return new CustomUserDetails(user);
     }
 }

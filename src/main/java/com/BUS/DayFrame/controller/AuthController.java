@@ -3,6 +3,7 @@ package com.BUS.DayFrame.controller;
 import com.BUS.DayFrame.dto.request.LoginRequestDTO;
 import com.BUS.DayFrame.dto.response.ApiResponseDTO;
 import com.BUS.DayFrame.dto.response.TokenResponseDTO;
+import com.BUS.DayFrame.security.service.CustomUserDetails;
 import com.BUS.DayFrame.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,14 +24,14 @@ public class AuthController {
 
     // 토큰 갱신 (인증된 사용자 정보 활용)
     @PostMapping("/token")
-    public ApiResponseDTO<TokenResponseDTO> refreshAccessToken(@AuthenticationPrincipal UserDetails userDetails) {
-        return ApiResponseDTO.success(authService.tokenRefresh(userDetails.getUsername()));
+    public ApiResponseDTO<TokenResponseDTO> refreshAccessToken(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ApiResponseDTO.success(authService.tokenRefresh(userDetails.getUserId()));
     }
 
     // 로그아웃 (인증된 사용자 정보 활용)
     @PostMapping("/logout")
-    public ApiResponseDTO<String> logout(@AuthenticationPrincipal UserDetails userDetails) {
-        authService.logout(userDetails.getUsername());
+    public ApiResponseDTO<String> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        authService.logout(userDetails.getUserId());
         return ApiResponseDTO.success("로그아웃이 완료되었습니다.");
     }
 }
