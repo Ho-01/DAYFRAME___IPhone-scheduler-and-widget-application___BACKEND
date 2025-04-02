@@ -29,7 +29,7 @@ public class AuthService {
     @Transactional
     public TokenResponseDTO login(LoginRequestDTO loginRequestDTO){
         User user = userJpaRepository.findByEmail(loginRequestDTO.getEmail())
-                .orElseThrow(() -> new EntityNotFoundException("email: "+loginRequestDTO.getEmail()+" 에 해당하는 user를 잧을 수 없음."));
+                .orElseThrow(()  -> new EntityNotFoundException("email: "+loginRequestDTO.getEmail()+" 에 해당하는 user를 잧을 수 없음."));
         if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword())) {
             throw new BadCredentialsException("비밀번호가 올바르지 않습니다.");
         }
