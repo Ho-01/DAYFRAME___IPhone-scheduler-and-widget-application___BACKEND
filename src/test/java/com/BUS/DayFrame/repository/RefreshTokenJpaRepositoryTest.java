@@ -1,6 +1,7 @@
 package com.BUS.DayFrame.repository;
 
 import com.BUS.DayFrame.domain.RefreshToken;
+import com.BUS.DayFrame.domain.User;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,15 +18,17 @@ class RefreshTokenJpaRepositoryTest {
     @Autowired
     private RefreshTokenJpaRepository refreshTokenJpaRepository;
     private RefreshToken refreshToken;
+
     @BeforeEach
     void setUp() {
-        refreshToken = new RefreshToken(1L,"token", LocalDateTime.now());
+        User user = new User("test@email.com", "testPassword", "testUser");
+        refreshToken = new RefreshToken(user,"token", LocalDateTime.now());
         refreshTokenJpaRepository.save(refreshToken);
     }
 
     @Test
     void deleteByEmail() {
-        refreshTokenJpaRepository.deleteByUserId(refreshToken.getUserId());
+        refreshTokenJpaRepository.deleteByUser(refreshToken.getUser());
         Assertions.assertThat(refreshTokenJpaRepository.findById(refreshToken.getId()).isPresent()).isEqualTo(false);
     }
 }

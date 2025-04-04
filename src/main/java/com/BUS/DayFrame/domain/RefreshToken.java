@@ -1,8 +1,6 @@
 package com.BUS.DayFrame.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,13 +15,16 @@ public class RefreshToken {
     @GeneratedValue
     private Long id;
 
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     private String refreshToken;
     private LocalDateTime expirationTime;
 
     @Builder
-    public RefreshToken(Long userId, String refreshToken, LocalDateTime expirationTime) {
-        this.userId = userId;
+    public RefreshToken(User user, String refreshToken, LocalDateTime expirationTime) {
+        this.user = user;
         this.refreshToken = refreshToken;
         this.expirationTime = expirationTime;
     }
