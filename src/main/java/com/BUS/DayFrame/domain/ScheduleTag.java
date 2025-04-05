@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -37,7 +39,6 @@ public class ScheduleTag {
     public void removeRelationship(){
         if(this.schedule != null){
             this.schedule.getScheduleTags().remove(this);
-            this.schedule = null;
         }
     }
 }

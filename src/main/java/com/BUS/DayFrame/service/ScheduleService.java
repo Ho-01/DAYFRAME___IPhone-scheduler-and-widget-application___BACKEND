@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +68,7 @@ public class ScheduleService {
                 throw new IllegalArgumentException("종료시간은 필수입니다 (allDay=false)");
             }
         }
-        Schedule schedule = new Schedule(
+        return new Schedule(
                 user,
                 scheduleCreateDTO.getName(),
                 start,
@@ -76,7 +77,6 @@ public class ScheduleService {
                 scheduleCreateDTO.getLocation(),
                 scheduleCreateDTO.getDescription()
         );
-        return schedule;
     }
 
     public List<ScheduleResponseDTO> findSchedulesByPeriod(Long userId, String period, LocalDateTime today) {
@@ -89,7 +89,7 @@ public class ScheduleService {
         switch (period.toLowerCase()) {
             case "week":
                 // 오늘 날짜가 포함된 주간(일요일~토요일) 계산
-                startDateTime = today.with(java.time.DayOfWeek.SUNDAY).toLocalDate().atStartOfDay();
+                startDateTime = today.with(DayOfWeek.MONDAY).toLocalDate().atStartOfDay();
                 endDateTime = startDateTime.plusDays(6).withHour(23).withMinute(59).withSecond(59);
                 break;
             case "month":
@@ -131,6 +131,7 @@ public class ScheduleService {
         if(!userId.equals(schedule.getUser().getId())){
             throw new IllegalArgumentException("id: "+scheduleId+"에 해당하는 schedule은 사용자 소유가 아닙니다");
         }
+        System.out.println("서비스진입");
         schedule.updateSchedule(
                 scheduleUpdateDTO.getName(),
                 scheduleUpdateDTO.getStartDateTime(),
@@ -140,12 +141,11 @@ public class ScheduleService {
                 scheduleUpdateDTO.getDescription(),
                 scheduleUpdateDTO.getIsDone()
         );
-
-        for(ScheduleTag scheduleTag : schedule.getScheduleTags()){
+        List<ScheduleTag> scheduleTagsCopy = new ArrayList<>(schedule.getScheduleTags());
+        for(ScheduleTag scheduleTag : scheduleTagsCopy){
             scheduleTag.removeRelationship();
             scheduleTagJpaRepository.delete(scheduleTag);
         }
-
         for(Long tagId: scheduleUpdateDTO.getTagIds()){
             Tag tag = tagJpaRepository.findById(tagId)
                     .orElseThrow(() -> new EntityNotFoundException("id: "+tagId+" 에 해당하는 tag를 잧을 수 없음."));
@@ -166,7 +166,8 @@ public class ScheduleService {
         if(!userId.equals(schedule.getUser().getId())){
             throw new IllegalArgumentException("id: "+scheduleId+"에 해당하는 schedule은 사용자 소유가 아닙니다");
         }
-        for(ScheduleTag scheduleTag: schedule.getScheduleTags()){
+        List<ScheduleTag> scheduleTagsCopy = new ArrayList<>(schedule.getScheduleTags());
+        for(ScheduleTag scheduleTag: scheduleTagsCopy){
             scheduleTag.removeRelationship();
             scheduleTagJpaRepository.delete(scheduleTag);
         }

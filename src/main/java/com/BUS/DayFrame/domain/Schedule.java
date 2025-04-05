@@ -38,7 +38,7 @@ public class Schedule {
     private String description;
 
     @Column(nullable = false)
-    private Boolean isDone;
+    private Boolean isDone = false;
 
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<ScheduleTag> scheduleTags = new ArrayList<>();
