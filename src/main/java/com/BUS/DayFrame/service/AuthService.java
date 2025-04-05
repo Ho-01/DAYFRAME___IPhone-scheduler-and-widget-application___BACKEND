@@ -35,9 +35,9 @@ public class AuthService {
         }
         String accessToken = jwtTokenUtil.generateAccessToken(user.getId());
         String refreshToken = jwtTokenUtil.generateRefreshToken(user.getId());
-        refreshTokenJpaRepository.deleteByUserId(user.getId());
+        refreshTokenJpaRepository.deleteByUser(user);
         refreshTokenJpaRepository.save(new RefreshToken(
-                        user.getId(),
+                        user,
                         refreshToken,
                         LocalDateTime.now().plusSeconds(jwtTokenUtil.REFRESH_TOKEN_EXPIRATION/1000)));
         return new TokenResponseDTO(accessToken,refreshToken);
@@ -50,12 +50,14 @@ public class AuthService {
 
     @Transactional
     public TokenResponseDTO tokenRefresh(Long userId){
-        refreshTokenJpaRepository.deleteByUserId(userId);
+        User user = userJpaRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("id: "+userId+" 에 해당하는 user를 잧을 수 없음."));
+        refreshTokenJpaRepository.deleteByUser(user);
         String accessToken = jwtTokenUtil.generateAccessToken(userId);
         String refreshToken = jwtTokenUtil.generateRefreshToken(userId);
 
         refreshTokenJpaRepository.save(new RefreshToken(
-                userId,
+                user,
                 refreshToken,
                 LocalDateTime.now().plusSeconds(jwtTokenUtil.REFRESH_TOKEN_EXPIRATION/1000)));
         return new TokenResponseDTO(accessToken, refreshToken);
