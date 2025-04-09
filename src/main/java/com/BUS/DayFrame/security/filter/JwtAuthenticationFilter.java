@@ -30,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && token.startsWith("Bearer ")) {
             token = token.replace("Bearer ", "");
 
-            jwtTokenUtil.validateToken(token);
+            jwtTokenUtil.validateAccessToken(token);
             Long userId = jwtTokenUtil.extractUserId(token);
             UserDetails userDetails = customUserDetailsService.loadUserByUserId(userId);
 

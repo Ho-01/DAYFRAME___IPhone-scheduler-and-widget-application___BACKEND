@@ -49,7 +49,13 @@ public class AuthService {
     }
 
     @Transactional
-    public TokenResponseDTO tokenRefresh(Long userId){
+    public TokenResponseDTO tokenRefresh(String token){
+        if (token == null || !token.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("refreshToken 이 없거나 잘못된 형식입니다.");
+        }
+        token = token.replace("Bearer ", "");
+        jwtTokenUtil.validateRefreshToken(token);
+        Long userId = jwtTokenUtil.extractUserId(token);
         User user = userJpaRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("id: "+userId+" 에 해당하는 user를 잧을 수 없음."));
         refreshTokenJpaRepository.deleteByUser(user);

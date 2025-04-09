@@ -17,6 +17,7 @@ public class JwtTokenUtil {
 
     public String generateAccessToken(Long userId){
         return Jwts.builder()
+                .claim("type", "access")
                 .subject(String.valueOf(userId))
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+ACCESS_TOKEN_EXPIRATION))
@@ -26,6 +27,7 @@ public class JwtTokenUtil {
 
     public String generateRefreshToken(Long userId){
         return Jwts.builder()
+                .claim("type", "refresh")
                 .subject(String.valueOf(userId))
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+REFRESH_TOKEN_EXPIRATION))
@@ -41,8 +43,21 @@ public class JwtTokenUtil {
         return Long.parseLong(getClaims(jwtToken).getSubject());
     }
 
+    public void validateAccessToken(String jwtToken){
+        String type = getClaims(jwtToken).get("type", String.class);
+        if(!type.equals("access")){
+            throw new IllegalArgumentException("accessToken 이 아님. 현재 타입 : "+type);
+        }
+        if(getClaims(jwtToken).getExpiration().before(new Date())) {
+            throw new ExpiredJwtException(null, null, "");
+        }
+    }
 
-    public void validateToken(String jwtToken){
+    public void validateRefreshToken(String jwtToken){
+        String type = getClaims(jwtToken).get("type", String.class);
+        if(!type.equals("refresh")){
+            throw new IllegalArgumentException("refreshToken 이 아님. 현재 타입 : "+type);
+        }
         if(getClaims(jwtToken).getExpiration().before(new Date())){
             throw new ExpiredJwtException(null, null, "");
         }

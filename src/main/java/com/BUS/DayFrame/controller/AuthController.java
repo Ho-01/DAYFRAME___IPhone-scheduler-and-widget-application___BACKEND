@@ -23,8 +23,8 @@ public class AuthController {
 
     // 토큰 갱신 (인증된 사용자 정보 활용)
     @PostMapping("/token")
-    public ApiResponseDTO<TokenResponseDTO> refreshAccessToken(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ApiResponseDTO.success(authService.tokenRefresh(userDetails.getUserId()));
+    public ApiResponseDTO<TokenResponseDTO> refreshAccessToken(@RequestHeader("Authorization") String refreshTokenHeader) {
+        return ApiResponseDTO.success(authService.tokenRefresh(refreshTokenHeader));
     }
 
     // 로그아웃 (인증된 사용자 정보 활용)
