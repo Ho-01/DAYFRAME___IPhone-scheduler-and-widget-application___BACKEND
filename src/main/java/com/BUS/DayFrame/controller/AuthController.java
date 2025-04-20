@@ -1,6 +1,7 @@
 package com.BUS.DayFrame.controller;
 
 import com.BUS.DayFrame.dto.request.LoginRequestDTO;
+import com.BUS.DayFrame.dto.request.OAuthLoginDTO;
 import com.BUS.DayFrame.dto.response.ApiResponseDTO;
 import com.BUS.DayFrame.dto.response.TokenResponseDTO;
 import com.BUS.DayFrame.security.service.CustomUserDetails;
@@ -33,4 +34,14 @@ public class AuthController {
         authService.logout(userDetails.getUserId());
         return ApiResponseDTO.success("로그아웃이 완료되었습니다.");
     }
+    @PostMapping("/google")
+    public ApiResponseDTO<TokenResponseDTO> googleLogin(@RequestBody OAuthLoginDTO dto) {
+        return ApiResponseDTO.success(authService.googleLogin(dto.getIdToken()));
+    }
+// 카카오 email받아오게해줘ㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓ
+    @PostMapping("/kakao")
+    public ApiResponseDTO<TokenResponseDTO>kakaoLogin(@RequestBody OAuthLoginDTO dto) {
+        return ApiResponseDTO.success(authService.kakaoLogin(dto.getIdToken()));
+    }
+
 }
