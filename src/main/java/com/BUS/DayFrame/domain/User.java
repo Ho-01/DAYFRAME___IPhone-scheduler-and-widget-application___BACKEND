@@ -5,10 +5,12 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.security.PrivateKey;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
+//소셜로그인 , 로컬 로그인 유저 구분을위한 authProvider 추가
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -26,6 +28,9 @@ public class User {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String authProvider;
+
     @Column(nullable = false, updatable = false)
     private final LocalDateTime createdAt = LocalDateTime.now();
 
@@ -36,14 +41,17 @@ public class User {
     private final List<Schedule> schedules = new ArrayList<>();
 
     @Builder
-    public User(String email, String password, String name) {
+    public User(String email, String password, String name, String authProvider) {
         this.email = email;
         this.password = password;
         this.name = name;
+        this.authProvider = authProvider;
     }
+
 
     public void updateUserInfo(String password, String name) {
         this.password = password;
         this.name = name;
     }
+
 }
