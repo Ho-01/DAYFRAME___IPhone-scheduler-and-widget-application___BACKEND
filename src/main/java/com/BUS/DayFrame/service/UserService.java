@@ -29,14 +29,17 @@ public class UserService {
         User user = new User(
                 userCreateDTO.getEmail(),
                 passwordEncoder.encode(userCreateDTO.getPassword()),
-                userCreateDTO.getName());
+                userCreateDTO.getName(),
+                "local"
+        );
+        ;
         userJpaRepository.save(user);
     }
 
     public UserResponseDTO getUserInfo(String email){
         User user = userJpaRepository.findByEmail(email)
                 .orElseThrow(()-> new EntityNotFoundException("email: "+email+" 에 해당하는 user를 잧을 수 없음."));
-        return new UserResponseDTO(user.getEmail(), user.getName(), user.getCreatedAt());
+        return new UserResponseDTO(user.getEmail(), user.getName(), user.getCreatedAt(),user.getAuthProvider());
     }
 
     @Transactional
@@ -44,7 +47,7 @@ public class UserService {
         User user = userJpaRepository.findByEmail(email)
                 .orElseThrow(()-> new EntityNotFoundException("email: "+email+" 에 해당하는 user를 잧을 수 없음."));
         user.updateUserInfo(passwordEncoder.encode(userUpdateDTO.getPassword()), userUpdateDTO.getName());
-        return new UserResponseDTO(user.getEmail(), user.getName(), user.getCreatedAt());
+        return new UserResponseDTO(user.getEmail(), user.getName(), user.getCreatedAt(),user.getAuthProvider());
     }
     @Transactional
     public void deleteUser(String email){

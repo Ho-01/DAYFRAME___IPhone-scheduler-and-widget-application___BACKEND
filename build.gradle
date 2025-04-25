@@ -40,6 +40,8 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+	//kakao login
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 
 //	// **ByteBuddy (Mockito 및 Hibernate 호환성 문제 해결)**
 //	testImplementation 'net.bytebuddy:byte-buddy:1.15.4'
