@@ -38,10 +38,10 @@ public class AuthController {
     public ApiResponseDTO<TokenResponseDTO> googleLogin(@RequestBody OAuthLoginDTO dto) {
         return ApiResponseDTO.success(authService.googleLogin(dto.getIdToken()));
     }
-// 카카오 email받아오게해줘ㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓ
-    @PostMapping("/kakao")
-    public ApiResponseDTO<TokenResponseDTO>kakaoLogin(@RequestBody OAuthLoginDTO dto) {
-        return ApiResponseDTO.success(authService.kakaoLogin(dto.getIdToken()));
-    }
 
+// 카카오 email받아오게해줘ㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓ
+//    @PostMapping("/kakao")
+//    public ApiResponseDTO<TokenResponseDTO>kakaoLogin(@RequestBody OAuthLoginDTO dto) {
+//        return ApiResponseDTO.success(authService.kakaoLogin(dto.getIdToken()));
+//    }
 }

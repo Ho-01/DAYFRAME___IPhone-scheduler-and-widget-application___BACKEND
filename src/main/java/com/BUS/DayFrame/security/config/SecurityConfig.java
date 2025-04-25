@@ -34,9 +34,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/login",
+                                "/auth/token",
                                 "/users/register",
-                                "/auth/kakao",
                                 "/auth/google"
+                                //"/auth/kakao"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
