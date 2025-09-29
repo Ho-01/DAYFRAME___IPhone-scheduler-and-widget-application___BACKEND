@@ -1,53 +1,47 @@
 package com.BUS.DayFrame.controller;
 
 import com.BUS.DayFrame.dto.request.LoginRequestDTO;
-import com.BUS.DayFrame.dto.request.RefreshTokenRequestDTO;
-import com.BUS.DayFrame.dto.response.AccessTokenResponseDTO;
-import com.BUS.DayFrame.dto.response.LoginResponseDTO;
+import com.BUS.DayFrame.dto.request.OAuthLoginDTO;
+import com.BUS.DayFrame.dto.response.ApiResponseDTO;
+import com.BUS.DayFrame.dto.response.TokenResponseDTO;
+import com.BUS.DayFrame.security.service.CustomUserDetails;
 import com.BUS.DayFrame.service.AuthService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
 public class AuthController {
-    private final AuthService authService;
+    @Autowired
+    private AuthService authService;
 
     // 로그인 API (JWT 발급)
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequest) {
-        LoginResponseDTO response = authService.login(loginRequest);
-        return ResponseEntity.ok(response);
+    public ApiResponseDTO<TokenResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+        return ApiResponseDTO.success(authService.login(loginRequestDTO));
     }
 
-    // Refresh Token을 사용하여 Access Token 갱신 (수정중) / FE에서 요청
+    // 토큰 갱신 (인증된 사용자 정보 활용)
     @PostMapping("/token")
-    public ResponseEntity<AccessTokenResponseDTO> refreshAccessToken(@RequestBody RefreshTokenRequestDTO refreshTokenRequest) {
-        return ResponseEntity.ok(authService.refreshAccessToken(refreshTokenRequest));
+    public ApiResponseDTO<TokenResponseDTO> refreshAccessToken(@RequestHeader("Authorization") String refreshTokenHeader) {
+        return ApiResponseDTO.success(authService.tokenRefresh(refreshTokenHeader));
     }
 
-    // Access Token을 사용하여 Refresh Token 갱신 (수정중) / FE에서 요청
-    @PostMapping("/refresh-token")
-    public ResponseEntity<Map<String, String>> refreshRefreshToken(@AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername();
-        String newRefreshToken = authService.refreshRefreshToken(email);
-
-        return ResponseEntity.ok(Map.of("refreshToken", newRefreshToken));
-    }
-
+    // 로그아웃 (인증된 사용자 정보 활용)
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String refreshTokenHeader) {
-        if (refreshTokenHeader == null || !refreshTokenHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("유효하지 않은 Refresh Token 형식입니다.");
-        }
-        String refreshToken = refreshTokenHeader.substring(7); // "Bearer " 제거 후 토큰 추출
-        authService.logout(refreshToken);
-        return ResponseEntity.ok(Map.of("message", "로그아웃 성공"));
+    public ApiResponseDTO<String> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        authService.logout(userDetails.getUserId());
+        return ApiResponseDTO.success("로그아웃이 완료되었습니다.");
     }
+    @PostMapping("/google")
+    public ApiResponseDTO<TokenResponseDTO> googleLogin(@RequestBody OAuthLoginDTO dto) {
+        return ApiResponseDTO.success(authService.googleLogin(dto.getIdToken()));
+    }
+
+// 카카오 email받아오게해줘ㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓㅓ
+//    @PostMapping("/kakao")
+//    public ApiResponseDTO<TokenResponseDTO>kakaoLogin(@RequestBody OAuthLoginDTO dto) {
+//        return ApiResponseDTO.success(authService.kakaoLogin(dto.getIdToken()));
+//    }
 }

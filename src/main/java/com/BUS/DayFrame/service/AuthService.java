@@ -3,83 +3,157 @@ package com.BUS.DayFrame.service;
 import com.BUS.DayFrame.domain.RefreshToken;
 import com.BUS.DayFrame.domain.User;
 import com.BUS.DayFrame.dto.request.LoginRequestDTO;
-import com.BUS.DayFrame.dto.request.RefreshTokenRequestDTO;
-import com.BUS.DayFrame.dto.response.AccessTokenResponseDTO;
-import com.BUS.DayFrame.dto.response.LoginResponseDTO;
-import com.BUS.DayFrame.repository.RefreshTokenRepository;
-import com.BUS.DayFrame.repository.UserRepository;
+import com.BUS.DayFrame.dto.response.TokenResponseDTO;
+import com.BUS.DayFrame.repository.RefreshTokenJpaRepository;
+import com.BUS.DayFrame.repository.UserJpaRepository;
 import com.BUS.DayFrame.security.util.JwtTokenUtil;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
+
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.Base64;
+import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class AuthService {
-
-    private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtTokenUtil jwtTokenUtil;
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private RefreshTokenJpaRepository refreshTokenJpaRepository;
+    @Autowired
+    private UserJpaRepository userJpaRepository;
 
     @Transactional
-    public LoginResponseDTO login(LoginRequestDTO loginRequest) {
-        Optional<User> userOptional = userRepository.findByEmail(loginRequest.getEmail());
-        if (userOptional.isEmpty() || !passwordEncoder.matches(loginRequest.getPassword(), userOptional.get().getPassword())) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+    public TokenResponseDTO login(LoginRequestDTO loginRequestDTO){
+        User user = userJpaRepository.findByEmail(loginRequestDTO.getEmail())
+                .orElseThrow(()  -> new EntityNotFoundException("email: "+loginRequestDTO.getEmail()+" 에 해당하는 user를 잧을 수 없음."));
+        if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword())) {
+            throw new BadCredentialsException("비밀번호가 올바르지 않습니다.");
         }
-
-        User user = userOptional.get();
-        String accessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
-        String refreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
-
-        refreshTokenRepository.deleteByEmail(user.getEmail()); // 기존 Refresh Token 삭제
-        refreshTokenRepository.save(new RefreshToken(user.getEmail(), refreshToken, LocalDateTime.now().plusDays(7)));
-
-        return new LoginResponseDTO(accessToken, refreshToken);
+        String accessToken = jwtTokenUtil.generateAccessToken(user.getId());
+        String refreshToken = jwtTokenUtil.generateRefreshToken(user.getId());
+        refreshTokenJpaRepository.deleteByUser(user);
+        refreshTokenJpaRepository.save(new RefreshToken(
+                        user,
+                        refreshToken,
+                        LocalDateTime.now().plusSeconds(jwtTokenUtil.REFRESH_TOKEN_EXPIRATION/1000)));
+        return new TokenResponseDTO(accessToken,refreshToken);
     }
 
-    // Access Token을 사용하여 Refresh Token을 갱신 (수정중)
     @Transactional
-    public String refreshRefreshToken(String email) {
-        // 기존 Refresh Token 삭제
-        refreshTokenRepository.deleteByEmail(email);
-
-        // 새로운 Refresh Token 생성
-        String newRefreshToken = jwtTokenUtil.generateRefreshToken(email);
-
-        // 새로운 Refresh Token 저장
-        RefreshToken refreshToken = new RefreshToken(email, newRefreshToken, LocalDateTime.now().plusDays(7));
-        refreshTokenRepository.save(refreshToken);
-
-        return newRefreshToken;
+    public void logout(Long userId){
+        refreshTokenJpaRepository.deleteByUserId(userId);
     }
 
-    // Refresh Token을 사용하여 새로운 Access Token 발급 (수정중)
     @Transactional
-    public AccessTokenResponseDTO refreshAccessToken(RefreshTokenRequestDTO refreshTokenRequest) {
-        String refreshToken = refreshTokenRequest.getRefreshToken();
-
-        Optional<RefreshToken> storedToken = refreshTokenRepository.findByToken(refreshToken);
-        if (storedToken.isEmpty()) {
-            throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다.");
+    public TokenResponseDTO tokenRefresh(String token){
+        if (token == null || !token.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("refreshToken 이 없거나 잘못된 형식입니다.");
         }
+        token = token.replace("Bearer ", "");
+        jwtTokenUtil.validateRefreshToken(token);
+        Long userId = jwtTokenUtil.extractUserId(token);
+        User user = userJpaRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("id: "+userId+" 에 해당하는 user를 잧을 수 없음."));
+        refreshTokenJpaRepository.deleteByUser(user);
+        String accessToken = jwtTokenUtil.generateAccessToken(userId);
+        String refreshToken = jwtTokenUtil.generateRefreshToken(userId);
 
-        String email = storedToken.get().getEmail();
-        String newAccessToken = jwtTokenUtil.generateAccessToken(email);
-
-        return new AccessTokenResponseDTO(newAccessToken);
+        refreshTokenJpaRepository.save(new RefreshToken(
+                user,
+                refreshToken,
+                LocalDateTime.now().plusSeconds(jwtTokenUtil.REFRESH_TOKEN_EXPIRATION/1000)));
+        return new TokenResponseDTO(accessToken, refreshToken);
     }
 
+    public TokenResponseDTO googleLogin(String idToken) {
+        String email = extractEmailFromGoogleIdToken(idToken);
+        return registerOrLogin(email, "google");
+    }
+
+    private String extractEmailFromGoogleIdToken(String idToken) {
+        try {
+            String[] parts = idToken.split("\\.");
+            if (parts.length != 3) {
+                throw new IllegalArgumentException("유효하지 않은 id_token입니다.");
+            }
+
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> payloadMap = mapper.readValue(payload, Map.class);
+
+            return (String) payloadMap.get("email");
+        } catch (Exception e) {
+            throw new RuntimeException("Google id_token 파싱 실패", e);
+        }
+    }
+
+    //소셜로그인 진입
     @Transactional
-    public void logout(String refreshToken) {
-        RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 Refresh Token입니다."));
+    private TokenResponseDTO registerOrLogin(String email, String provider) {
+        User user = userJpaRepository.findByEmail(email)
+                .orElseGet(() -> userJpaRepository.save(
+                        User.builder()
+                                .email(email)
+                                .password("LOGIN_WITH_" + provider.toUpperCase())   // 소셜 로그인 사용자는 비밀번호 없음
+                                .name("소셜 사용자")
+                                .authProvider(provider)
+                                .build()
+                ));
 
-        refreshTokenRepository.delete(storedToken); // Refresh Token 삭제
+        String accessToken = jwtTokenUtil.generateAccessToken(user.getId());
+        String refreshToken = jwtTokenUtil.generateRefreshToken(user.getId());
+
+        refreshTokenJpaRepository.deleteByUserId(user.getId());
+        refreshTokenJpaRepository.save(new RefreshToken(
+                user,
+                refreshToken,
+                LocalDateTime.now().plusSeconds(jwtTokenUtil.REFRESH_TOKEN_EXPIRATION / 1000)
+        ));
+
+        return new TokenResponseDTO(accessToken, refreshToken);
     }
+
+//    public TokenResponseDTO kakaoLogin(String accessToken) {
+//        String email = extractEmailFromKakaoAccessToken(accessToken);
+//        return registerOrLogin(email, "kakao");
+//    }
+//    private String extractEmailFromKakaoAccessToken(String accessToken) {
+//        try {
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.setBearerAuth(accessToken);
+//            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+//
+//            HttpEntity<Void> request = new HttpEntity<>(null, headers);
+//
+//            RestTemplate restTemplate = new RestTemplate();
+//            ResponseEntity<Map> response = restTemplate.exchange(
+//                    "https://kapi.kakao.com/v2/user/me",
+//                    HttpMethod.GET,
+//                    request,
+//                    Map.class
+//            );
+//
+//            Map<String, Object> kakaoAccount = (Map<String, Object>) response.getBody().get("kakao_account");
+//            if (kakaoAccount == null || !Boolean.TRUE.equals(kakaoAccount.get("has_email"))) {
+//                throw new IllegalArgumentException("이메일 정보를 가져올 수 없습니다.");
+//            }
+//
+//            return (String) kakaoAccount.get("email");
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException("카카오 사용자 정보 조회 실패", e);
+//        }
+//    }
 }
