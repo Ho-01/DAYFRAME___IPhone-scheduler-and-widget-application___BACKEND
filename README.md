@@ -1,7 +1,6 @@
 # 🧩 DayFrame: 멀티플랫폼 위젯 애플리케이션
 > **DayFrame은 다양한 일상 도구들을 위젯으로 구성하고, 플랫폼 제약 없이 나만의 보드를 자유롭게 디자인할 수 있도록 돕는 멀티플랫폼 애플리케이션입니다**
 >
-> 기타 설명
 
 <p align="center">
   <img src="./docs/title.png" width="100%"/>
@@ -14,27 +13,9 @@
 
 ---
 
-## 📸 스크린샷
-
-<p align="center">
-  <img src="./docs/screenshot1.png" width="12%"/>
-  <img src="./docs/screenshot2.png" width="12%"/>
-  <img src="./docs/screenshot3.png" width="12%"/>
-  <img src="./docs/screenshot4.png" width="12%"/>
-  <img src="./docs/screenshot5.png" width="12%"/>
-  <img src="./docs/screenshot6.png" width="12%"/>
-  <img src="./docs/screenshot7.png" width="12%"/>
-  <img src="./docs/screenshot8.png" width="12%"/>
-</p>
-
 ### 백엔드 아키텍처
 <p align="center">
   <img src="./docs/be.png" width="100%"/>
-</p>
-
-### 프로젝트 전체 아키텍쳐
-<p align="center">
-  <img src="./docs/architecture.png" width="100%"/>
 </p>
 
 ---
@@ -42,12 +23,10 @@
 ## 🎮 프로젝트 개요
 사용자에게 다음과 같은 기능을 제공합니다
 
--  **1**: 1
--  **2**: 2
--  **3**: 3
--  **4**: 4
--  **5**: 5
--  **6**: 6
+-  **1**: 오늘할일, 습관추적, 디데이, 스탑워치, 뽀모도로 타이머, 메모 등 다양한 위젯을 자유롭게 커스터마이징해 배치
+-  **2**: 여러 개의 위젯보드 생성 및 사용
+-  **3**: PC 웹, 안드로이드, 아이폰 등 멀티플랫폼 지원
+-  **4**: 모바일 사용자에게 커스터마이징한 개인 위젯을 배경화면 위젯으로 배치하는 기능 제공
 
 ---
 
